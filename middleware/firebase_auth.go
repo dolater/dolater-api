@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	api "github.com/dolater/dolater-api/generated"
 	"github.com/gin-gonic/gin"
-	api "github.com/kantacky/p2hacks2024-test-api/generated"
 )
 
 func (m Middleware) GetFirebaseAuthIDToken() gin.HandlerFunc {

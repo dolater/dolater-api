@@ -6,11 +6,11 @@ import (
 	"os"
 
 	firebaseAdmin "firebase.google.com/go/v4"
+	"github.com/dolater/dolater-api/db"
+	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/middleware"
+	"github.com/dolater/dolater-api/server"
 	"github.com/joho/godotenv"
-	"github.com/kantacky/p2hacks2024-test-api/db"
-	api "github.com/kantacky/p2hacks2024-test-api/generated"
-	"github.com/kantacky/p2hacks2024-test-api/middleware"
-	"github.com/kantacky/p2hacks2024-test-api/server"
 
 	"github.com/gin-gonic/gin"
 )

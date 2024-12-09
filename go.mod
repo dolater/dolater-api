@@ -1,4 +1,4 @@
-module github.com/kantacky/p2hacks2024-test-api
+module github.com/dolater/dolater-api
 
 go 1.23.3
 

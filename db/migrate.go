@@ -3,7 +3,7 @@ package db
 import (
 	"log"
 
-	"github.com/kantacky/p2hacks2024-test-api/model"
+	"github.com/dolater/dolater-api/model"
 )
 
 func Migrate() {

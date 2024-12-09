@@ -1,6 +1,6 @@
 # Do Later API
 
-[![CI](https://github.com/kantacky/dolater-api/actions/workflows/ci.yaml/badge.svg)](https://github.com/kantacky/dolater-api/actions/workflows/ci.yaml)
+[![CI](https://github.com/dolater/dolater-api/actions/workflows/ci.yaml/badge.svg)](https://github.com/dolater/dolater-api/actions/workflows/ci.yaml)
 
 ## Environment Variables
 

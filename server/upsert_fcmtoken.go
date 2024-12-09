@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/dolater/dolater-api/db"
+	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
+	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
-	"github.com/kantacky/p2hacks2024-test-api/db"
-	api "github.com/kantacky/p2hacks2024-test-api/generated"
-	"github.com/kantacky/p2hacks2024-test-api/model"
-	"github.com/kantacky/p2hacks2024-test-api/server/utility"
 )
 
 func (s *Server) UpsertFCMToken(c *gin.Context) {
