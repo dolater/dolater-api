@@ -23,4 +23,24 @@ func Migrate() {
 	if err != nil {
 		log.Println("Failed to migrate database")
 	}
+
+	err = db.AutoMigrate(&model.User{})
+	if err != nil {
+		log.Println("Failed to migrate database")
+	}
+
+	err = db.AutoMigrate(&model.TaskPool{})
+	if err != nil {
+		log.Println("Failed to migrate database")
+	}
+
+	err = db.AutoMigrate(&model.Task{})
+	if err != nil {
+		log.Println("Failed to migrate database")
+	}
+
+	err = db.AutoMigrate(&model.Following{})
+	if err != nil {
+		log.Println("Failed to migrate database")
+	}
 }
