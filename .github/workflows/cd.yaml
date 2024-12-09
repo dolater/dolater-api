@@ -1,8 +1,8 @@
 name: CD
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment_name:
@@ -102,7 +102,7 @@ jobs:
             POSTGRES_CLIENT_KEY_PATH=/secret/postgres/client-key/client.key
           env_vars_update_strategy: overwrite
           secrets: |
-            /secret/postgres/ca-crt/ca.crt=psql-dolater-kantacky-com_ca-crt:latest
-            /secret/postgres/client-crt/client.crt=psql-dolater-kantacky-com_client-crt:latest
-            /secret/postgres/client-key/client.key=psql-dolater-kantacky-com_client-key:latest
+            /secret/postgres/ca-crt/ca.crt=${{ vars.POSTGRES_CA_CERT_SECRET_NAME }}:latest
+            /secret/postgres/client-crt/client.crt=${{ vars.POSTGRES_CLIENT_CERT_SECRET_NAME }}:latest
+            /secret/postgres/client-key/client.key=${{ vars.POSTGRES_CLIENT_KEY_SECRET_NAME }}:latest
           secrets_update_strategy: overwrite
