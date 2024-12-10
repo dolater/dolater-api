@@ -6,6 +6,7 @@ import (
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +36,12 @@ func (s *Server) DeleteUser(c *gin.Context, id string) {
 		}
 		sqldb.Close()
 	}()
+
+	user := model.User{
+		Id: id,
+	}
+
+	db.Delete(&user)
 
 	c.Status(http.StatusNoContent)
 }
