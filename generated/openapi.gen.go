@@ -83,6 +83,9 @@ type User struct {
 // Id defines model for id.
 type Id = openapi_types.UUID
 
+// Uid defines model for uid.
+type Uid = string
+
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = Error
 

@@ -455,6 +455,13 @@ components:
       schema:
         type: string
         format: uuid
+    uid:
+      name: uid
+      in: query
+      required: true
+      description: UID
+      schema:
+        type: string
   securitySchemes:
     AuthBearer:
       type: http

@@ -1,14 +1,17 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (s *Server) GetUser(c *gin.Context, id uuid.UUID) {
@@ -37,7 +40,21 @@ func (s *Server) GetUser(c *gin.Context, id uuid.UUID) {
 		sqldb.Close()
 	}()
 
-	user := api.User{}
+	user := model.User{
+		Id: id.String(),
+	}
+
+	if err := db.
+		First(&user).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusNotFound, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
 
 	c.JSON(http.StatusOK, user)
 }
