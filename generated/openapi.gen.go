@@ -44,8 +44,6 @@ type Task struct {
 	CreatedAt   time.Time          `json:"createdAt"`
 	DeletedAt   *time.Time         `json:"deletedAt,omitempty"`
 	Id          openapi_types.UUID `json:"id"`
-	Owner       User               `json:"owner"`
-	Pool        *TaskPool          `json:"pool,omitempty"`
 	Title       string             `json:"title"`
 	Url         string             `json:"url"`
 }
@@ -53,7 +51,6 @@ type Task struct {
 // TaskPool defines model for TaskPool.
 type TaskPool struct {
 	Id    openapi_types.UUID `json:"id"`
-	Owner User               `json:"owner"`
 	Tasks []Task             `json:"tasks"`
 }
 
@@ -74,11 +71,13 @@ type UpdateUserInput struct {
 
 // User defines model for User.
 type User struct {
-	DisplayName string             `json:"displayName"`
-	Followings  []Following        `json:"followings"`
-	Id          openapi_types.UUID `json:"id"`
-	PhotoURL    string             `json:"photoURL"`
-	Pools       []TaskPool         `json:"pools"`
+	ActiveTaskPool   TaskPool    `json:"activeTaskPool"`
+	ArchivedTaskPool TaskPool    `json:"archivedTaskPool"`
+	DisplayName      string      `json:"displayName"`
+	Followings       []Following `json:"followings"`
+	Id               string      `json:"id"`
+	PendingTaskPool  TaskPool    `json:"pendingTaskPool"`
+	PhotoURL         string      `json:"photoURL"`
 }
 
 // Id defines model for id.

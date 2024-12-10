@@ -32,8 +32,6 @@ paths:
                   $ref: "#/components/schemas/User"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
@@ -52,8 +50,6 @@ paths:
                 $ref: "#/components/schemas/User"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
   /users/{id}:
@@ -136,8 +132,6 @@ paths:
                   $ref: "#/components/schemas/TaskPool"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
@@ -156,8 +150,6 @@ paths:
                 $ref: "#/components/schemas/TaskPool"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
   /pools/{id}:
@@ -216,8 +208,6 @@ paths:
                   $ref: "#/components/schemas/Task"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
@@ -242,8 +232,6 @@ paths:
                 $ref: "#/components/schemas/Task"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
   /tasks/{id}:
@@ -340,16 +328,17 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         displayName:
           type: string
         photoURL:
           type: string
           format: uri
-        pools:
-          type: array
-          items:
-            $ref: "#/components/schemas/TaskPool"
+        activeTaskPool:
+          $ref: "#/components/schemas/TaskPool"
+        archivedTaskPool:
+          $ref: "#/components/schemas/TaskPool"
+        pendingTaskPool:
+          $ref: "#/components/schemas/TaskPool"
         followings:
           type: array
           items:
@@ -358,7 +347,9 @@ components:
         - id
         - displayName
         - photoURL
-        - pools
+        - activeTaskPool
+        - archivedTaskPool
+        - pendingTaskPool
         - followings
     UpdateUserInput:
       type: object
@@ -391,8 +382,6 @@ components:
         id:
           type: string
           format: uuid
-        owner:
-          $ref: "#/components/schemas/User"
         tasks:
           type: array
           items:
@@ -424,16 +413,11 @@ components:
         deletedAt:
           type: string
           format: date-time
-        owner:
-          $ref: "#/components/schemas/User"
-        pool:
-          $ref: "#/components/schemas/TaskPool"
       required:
         - id
         - title
         - url
         - createdAt
-        - owner
     CreateTaskInput:
       type: object
       properties:
