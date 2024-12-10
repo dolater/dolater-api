@@ -61,7 +61,7 @@ paths:
         - AppCheck: []
         - AuthBearer: []
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/uid"
       responses:
         200:
           $ref: "#/components/responses/UserOK"
