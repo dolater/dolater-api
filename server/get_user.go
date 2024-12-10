@@ -23,6 +23,14 @@ func (s *Server) GetUser(c *gin.Context, id string) {
 		return
 	}
 
+	if token.UID != id {
+		message := "Unauthorized"
+		c.AbortWithStatusJSON(http.StatusUnauthorized, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
 	db, err := db.GormDB("public")
 	if err != nil {
 		message := err.Error()
