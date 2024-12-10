@@ -52,7 +52,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         500:
           $ref: "#/components/responses/InternalServerError"
-  /users/{id}:
+  /users/{uid}:
     get:
       summary: Get User
       description: Get a user
@@ -457,7 +457,7 @@ components:
         format: uuid
     uid:
       name: uid
-      in: query
+      in: path
       required: true
       description: UID
       schema:

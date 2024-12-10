@@ -8,10 +8,9 @@ import (
 	api "github.com/dolater/dolater-api/generated"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
-func (s *Server) UpdateUser(c *gin.Context, id uuid.UUID) {
+func (s *Server) UpdateUser(c *gin.Context, id string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"

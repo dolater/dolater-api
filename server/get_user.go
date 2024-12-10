@@ -10,11 +10,10 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func (s *Server) GetUser(c *gin.Context, id uuid.UUID) {
+func (s *Server) GetUser(c *gin.Context, id string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -41,7 +40,7 @@ func (s *Server) GetUser(c *gin.Context, id uuid.UUID) {
 	}()
 
 	user := model.User{
-		Id: id.String(),
+		Id: id,
 	}
 
 	if err := db.
