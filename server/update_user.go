@@ -6,6 +6,7 @@ import (
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +37,26 @@ func (s *Server) UpdateUser(c *gin.Context, id string) {
 		sqldb.Close()
 	}()
 
-	user := api.User{}
+	var displayName string
+	var photoURL string
+	var ok bool
+
+	displayName, ok = token.Claims["name"].(string)
+	if !ok {
+		displayName = ""
+	}
+	photoURL, ok = token.Claims["picture"].(string)
+	if !ok {
+		photoURL = ""
+	}
+
+	user := model.User{
+		Id:          id,
+		DisplayName: displayName,
+		PhotoURL:    photoURL,
+	}
+
+	db.Save(&user)
 
 	c.JSON(http.StatusOK, user)
 }
