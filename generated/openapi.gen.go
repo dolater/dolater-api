@@ -83,6 +83,9 @@ type User struct {
 // Id defines model for id.
 type Id = openapi_types.UUID
 
+// Uid defines model for uid.
+type Uid = string
+
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = Error
 
@@ -167,14 +170,14 @@ type ServerInterface interface {
 	// (POST /users)
 	CreateUser(c *gin.Context)
 	// Delete User
-	// (DELETE /users/{id})
-	DeleteUser(c *gin.Context, id Id)
+	// (DELETE /users/{uid})
+	DeleteUser(c *gin.Context, uid Uid)
 	// Get User
-	// (GET /users/{id})
-	GetUser(c *gin.Context, id Id)
+	// (GET /users/{uid})
+	GetUser(c *gin.Context, uid Uid)
 	// Update User
-	// (PATCH /users/{id})
-	UpdateUser(c *gin.Context, id Id)
+	// (PATCH /users/{uid})
+	UpdateUser(c *gin.Context, uid Uid)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -450,12 +453,12 @@ func (siw *ServerInterfaceWrapper) DeleteUser(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id Id
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -470,7 +473,7 @@ func (siw *ServerInterfaceWrapper) DeleteUser(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.DeleteUser(c, id)
+	siw.Handler.DeleteUser(c, uid)
 }
 
 // GetUser operation middleware
@@ -478,12 +481,12 @@ func (siw *ServerInterfaceWrapper) GetUser(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id Id
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -498,7 +501,7 @@ func (siw *ServerInterfaceWrapper) GetUser(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetUser(c, id)
+	siw.Handler.GetUser(c, uid)
 }
 
 // UpdateUser operation middleware
@@ -506,12 +509,12 @@ func (siw *ServerInterfaceWrapper) UpdateUser(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id Id
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -526,7 +529,7 @@ func (siw *ServerInterfaceWrapper) UpdateUser(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.UpdateUser(c, id)
+	siw.Handler.UpdateUser(c, uid)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -568,7 +571,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PATCH(options.BaseURL+"/tasks/:id", wrapper.UpdateTask)
 	router.GET(options.BaseURL+"/users", wrapper.GetUsers)
 	router.POST(options.BaseURL+"/users", wrapper.CreateUser)
-	router.DELETE(options.BaseURL+"/users/:id", wrapper.DeleteUser)
-	router.GET(options.BaseURL+"/users/:id", wrapper.GetUser)
-	router.PATCH(options.BaseURL+"/users/:id", wrapper.UpdateUser)
+	router.DELETE(options.BaseURL+"/users/:uid", wrapper.DeleteUser)
+	router.GET(options.BaseURL+"/users/:uid", wrapper.GetUser)
+	router.PATCH(options.BaseURL+"/users/:uid", wrapper.UpdateUser)
 }

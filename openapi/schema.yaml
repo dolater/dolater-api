@@ -52,7 +52,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         500:
           $ref: "#/components/responses/InternalServerError"
-  /users/{id}:
+  /users/{uid}:
     get:
       summary: Get User
       description: Get a user
@@ -61,7 +61,7 @@ paths:
         - AppCheck: []
         - AuthBearer: []
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/uid"
       responses:
         200:
           $ref: "#/components/responses/UserOK"
@@ -79,7 +79,7 @@ paths:
         - AppCheck: []
         - AuthBearer: []
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/uid"
       requestBody:
         required: true
         content:
@@ -103,7 +103,7 @@ paths:
         - AppCheck: []
         - AuthBearer: []
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/uid"
       responses:
         204:
           $ref: "#/components/responses/NoContent"
@@ -455,6 +455,13 @@ components:
       schema:
         type: string
         format: uuid
+    uid:
+      name: uid
+      in: path
+      required: true
+      description: UID
+      schema:
+        type: string
   securitySchemes:
     AuthBearer:
       type: http
