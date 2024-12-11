@@ -10,7 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (s *Server) CreateUser(c *gin.Context) {
@@ -59,7 +59,8 @@ func (s *Server) CreateUser(c *gin.Context) {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		if !errors.Is(err, gorm.ErrDuplicatedKey) {
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
 			message := err.Error()
 			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
 				Message: &message,
