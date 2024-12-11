@@ -41,7 +41,13 @@ func (s *Server) DeleteUser(c *gin.Context, id string) {
 		Id: id,
 	}
 
-	db.Delete(&user)
+	if err := db.Delete(&user).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
 
 	c.Status(http.StatusNoContent)
 }
