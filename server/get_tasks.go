@@ -6,6 +6,7 @@ import (
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +37,18 @@ func (s *Server) GetTasks(c *gin.Context) {
 		sqldb.Close()
 	}()
 
-	tasks := []api.Task{}
+	tasks := []model.Task{}
+
+	if err := db.
+		Where(&model.Task{UserId: token.UID}).
+		Find(&tasks).
+		Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, tasks)
 }
