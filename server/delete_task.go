@@ -6,6 +6,7 @@ import (
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -36,6 +37,18 @@ func (s *Server) DeleteTask(c *gin.Context, id uuid.UUID) {
 		}
 		sqldb.Close()
 	}()
+
+	task := model.Task{
+		Id: id,
+	}
+
+	if err := db.Delete(&task).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
 
 	c.Status(http.StatusNoContent)
 }
