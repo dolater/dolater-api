@@ -6,6 +6,7 @@ import (
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
+	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -37,7 +38,15 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		sqldb.Close()
 	}()
 
-	task := api.Task{}
+	var requestBody api.UpdateTaskInput
+
+	task := model.Task{
+		Id:          id,
+		Title:       requestBody.Title,
+		URL:         requestBody.Url,
+		CompletedAt: requestBody.CompletedAt,
+		ArchivedAt:  requestBody.ArchivedAt,
+	}
 
 	c.JSON(http.StatusOK, task)
 }
