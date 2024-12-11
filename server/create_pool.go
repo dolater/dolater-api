@@ -52,5 +52,5 @@ func (s *Server) CreatePool(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, pool)
+	c.JSON(http.StatusCreated, pool)
 }

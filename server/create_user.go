@@ -69,5 +69,5 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusCreated, user)
 }
