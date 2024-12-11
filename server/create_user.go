@@ -54,8 +54,8 @@ func (s *Server) CreateUser(c *gin.Context) {
 
 	user := model.User{
 		Id:          token.UID,
-		DisplayName: displayName,
-		PhotoURL:    photoURL,
+		DisplayName: &displayName,
+		PhotoURL:    &photoURL,
 	}
 
 	if err := db.Create(&user).Error; err != nil {
