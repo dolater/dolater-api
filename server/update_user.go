@@ -37,26 +37,28 @@ func (s *Server) UpdateUser(c *gin.Context, id string) {
 		sqldb.Close()
 	}()
 
-	var displayName string
-	var photoURL string
-	var ok bool
-
-	displayName, ok = token.Claims["name"].(string)
-	if !ok {
-		displayName = ""
-	}
-	photoURL, ok = token.Claims["picture"].(string)
-	if !ok {
-		photoURL = ""
+	var requestBody api.UpdateUserInput
+	if err := c.BindJSON(&requestBody); err != nil {
+		message := err.Error()
+		c.AbortWithStatusJSON(http.StatusBadRequest, api.Error{
+			Message: &message,
+		})
+		return
 	}
 
 	user := model.User{
 		Id:          id,
-		DisplayName: displayName,
-		PhotoURL:    photoURL,
+		DisplayName: requestBody.DisplayName,
+		PhotoURL:    requestBody.PhotoURL,
 	}
 
-	db.Save(&user)
+	if err := db.Save(&user).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, user)
 }
