@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (s *Server) CreateUser(c *gin.Context) {
@@ -57,7 +59,7 @@ func (s *Server) CreateUser(c *gin.Context) {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		if !errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+		if !errors.Is(err, gorm.ErrDuplicatedKey) {
 			message := err.Error()
 			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
 				Message: &message,
