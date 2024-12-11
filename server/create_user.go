@@ -57,11 +57,13 @@ func (s *Server) CreateUser(c *gin.Context) {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		message := err.Error()
-		c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
-			Message: &message,
-		})
-		return
+		if !errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			message := err.Error()
+			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, user)
