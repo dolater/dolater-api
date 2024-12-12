@@ -46,7 +46,14 @@ func (s *Server) ApproveFollowRequest(c *gin.Context, uid string) {
 		ApprovedAt: &approveAt,
 	}
 
-	if err := db.Save(&followStatus).Error; err != nil {
+	if err := db.Updates(&followStatus).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
+	if err := db.First(&followStatus).Error; err != nil {
 		message := err.Error()
 		c.JSON(http.StatusInternalServerError, api.Error{
 			Message: &message,
