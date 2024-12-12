@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
@@ -37,6 +38,18 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	user := model.User{}
-	c.JSON(http.StatusOK, user)
+	followStatus := model.FollowStatus{
+		FromId:      token.UID,
+		ToId:        uid,
+		RequestedAt: time.Now(),
+	}
+
+	if err := db.Create(&followStatus).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, followStatus)
 }
