@@ -54,6 +54,7 @@ func (s *Server) GetNotifications(c *gin.Context) {
 	response := []api.Notification{}
 	for _, notification := range notifications {
 		response = append(response, api.Notification{
+			Id:        notification.Id,
 			Title:     notification.Title,
 			Body:      &notification.Body,
 			Url:       &notification.URL,
