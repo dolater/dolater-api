@@ -44,7 +44,7 @@ func (s *Server) GetNotifications(c *gin.Context) {
 	if err := db.Where(&model.Notification{UserId: token.UID}).Find(&notifications).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
-			c.JSON(http.StatusNotFound, api.Error{
+			c.JSON(http.StatusInternalServerError, api.Error{
 				Message: &message,
 			})
 			return
