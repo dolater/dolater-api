@@ -22,6 +22,14 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 		return
 	}
 
+	if uid == token.UID {
+		message := "Cannot follow yourself"
+		c.JSON(http.StatusBadRequest, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
 	db, err := db.GormDB("public")
 	if err != nil {
 		message := err.Error()
