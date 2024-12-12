@@ -5,7 +5,8 @@ import (
 )
 
 type TaskPool struct {
-	Id    uuid.UUID
-	Owner *User
-	Type  string // active, archived, pending
+	Id      uuid.UUID
+	OwnerId string
+	Owner   User
+	Type    string // active, archived, pending
 }
