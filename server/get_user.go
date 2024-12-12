@@ -55,7 +55,7 @@ func (s *Server) GetUser(c *gin.Context, uid string) {
 		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
-			c.JSON(http.StatusNotFound, api.Error{
+			c.JSON(http.StatusInternalServerError, api.Error{
 				Message: &message,
 			})
 			return

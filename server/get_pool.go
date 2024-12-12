@@ -48,7 +48,6 @@ func (s *Server) GetPool(c *gin.Context, id uuid.UUID) {
 		First(&pool).
 		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-
 			message := err.Error()
 			c.JSON(http.StatusNotFound, api.Error{
 				Message: &message,

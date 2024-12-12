@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (s *Server) UpdateUser(c *gin.Context, uid string) {
@@ -53,11 +55,13 @@ func (s *Server) UpdateUser(c *gin.Context, uid string) {
 	}
 
 	if err := db.Save(&user).Error; err != nil {
-		message := err.Error()
-		c.JSON(http.StatusInternalServerError, api.Error{
-			Message: &message,
-		})
-		return
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, user)

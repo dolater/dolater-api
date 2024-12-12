@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (s *Server) DeleteTask(c *gin.Context, id uuid.UUID) {
@@ -43,11 +45,13 @@ func (s *Server) DeleteTask(c *gin.Context, id uuid.UUID) {
 	}
 
 	if err := db.Delete(&task).Error; err != nil {
-		message := err.Error()
-		c.JSON(http.StatusInternalServerError, api.Error{
-			Message: &message,
-		})
-		return
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
 	c.Status(http.StatusNoContent)
