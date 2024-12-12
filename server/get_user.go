@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Server) GetUser(c *gin.Context, id string) {
+func (s *Server) GetUser(c *gin.Context, uid string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -23,7 +23,7 @@ func (s *Server) GetUser(c *gin.Context, id string) {
 		return
 	}
 
-	if token.UID != id {
+	if token.UID != uid {
 		message := "Unauthorized"
 		c.AbortWithStatusJSON(http.StatusUnauthorized, api.Error{
 			Message: &message,
@@ -48,7 +48,7 @@ func (s *Server) GetUser(c *gin.Context, id string) {
 	}()
 
 	user := model.User{
-		Id: id,
+		Id: uid,
 	}
 	if err := db.
 		First(&user).

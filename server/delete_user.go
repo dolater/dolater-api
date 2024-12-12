@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) DeleteUser(c *gin.Context, id string) {
+func (s *Server) DeleteUser(c *gin.Context, uid string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -38,7 +38,7 @@ func (s *Server) DeleteUser(c *gin.Context, id string) {
 	}()
 
 	user := model.User{
-		Id: id,
+		Id: uid,
 	}
 
 	if err := db.Delete(&user).Error; err != nil {

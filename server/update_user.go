@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) UpdateUser(c *gin.Context, id string) {
+func (s *Server) UpdateUser(c *gin.Context, uid string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -47,7 +47,7 @@ func (s *Server) UpdateUser(c *gin.Context, id string) {
 	}
 
 	user := model.User{
-		Id:          id,
+		Id:          uid,
 		DisplayName: requestBody.DisplayName,
 		PhotoURL:    requestBody.PhotoURL,
 	}
