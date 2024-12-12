@@ -20,8 +20,7 @@ const (
 
 // CreateTaskInput defines model for CreateTaskInput.
 type CreateTaskInput struct {
-	Title string `json:"title"`
-	Url   string `json:"url"`
+	Url string `json:"url"`
 }
 
 // Error defines model for Error.
@@ -29,12 +28,20 @@ type Error struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// Following defines model for Following.
-type Following struct {
+// FollowStatus defines model for FollowStatus.
+type FollowStatus struct {
 	ApprovedAt  *time.Time `json:"approvedAt,omitempty"`
-	IsFollowed  bool       `json:"isFollowed"`
-	RequestedAt *time.Time `json:"requestedAt,omitempty"`
-	User        User       `json:"user"`
+	From        User       `json:"from"`
+	RequestedAt time.Time  `json:"requestedAt"`
+	To          User       `json:"to"`
+}
+
+// Notification defines model for Notification.
+type Notification struct {
+	Body      *string   `json:"body,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	Title     string    `json:"title"`
+	Url       *string   `json:"url,omitempty"`
 }
 
 // Task defines model for Task.
@@ -42,16 +49,16 @@ type Task struct {
 	ArchivedAt  *time.Time         `json:"archivedAt,omitempty"`
 	CompletedAt *time.Time         `json:"completedAt,omitempty"`
 	CreatedAt   time.Time          `json:"createdAt"`
-	DeletedAt   *time.Time         `json:"deletedAt,omitempty"`
 	Id          openapi_types.UUID `json:"id"`
-	Title       string             `json:"title"`
+	Owner       User               `json:"owner"`
+	Pool        TaskPool           `json:"pool"`
 	Url         string             `json:"url"`
 }
 
 // TaskPool defines model for TaskPool.
 type TaskPool struct {
 	Id    openapi_types.UUID `json:"id"`
-	Tasks []Task             `json:"tasks"`
+	Owner *User              `json:"owner,omitempty"`
 }
 
 // UpdateTaskInput defines model for UpdateTaskInput.
@@ -71,20 +78,27 @@ type UpdateUserInput struct {
 
 // User defines model for User.
 type User struct {
-	ActiveTaskPool   TaskPool    `json:"activeTaskPool"`
-	ArchivedTaskPool TaskPool    `json:"archivedTaskPool"`
-	DisplayName      string      `json:"displayName"`
-	Followings       []Following `json:"followings"`
-	Id               string      `json:"id"`
-	PendingTaskPool  TaskPool    `json:"pendingTaskPool"`
-	PhotoURL         string      `json:"photoURL"`
+	ActiveTaskPool   TaskPool       `json:"activeTaskPool"`
+	ArchivedTaskPool TaskPool       `json:"archivedTaskPool"`
+	DisplayName      string         `json:"displayName"`
+	Followers        []FollowStatus `json:"followers"`
+	Followings       []FollowStatus `json:"followings"`
+	Id               string         `json:"id"`
+	PendingTaskPool  TaskPool       `json:"pendingTaskPool"`
+	PhotoURL         string         `json:"photoURL"`
 }
 
 // Id defines model for id.
 type Id = openapi_types.UUID
 
+// PoolId defines model for poolId.
+type PoolId = openapi_types.UUID
+
 // Uid defines model for uid.
 type Uid = string
+
+// FollowStatusOK defines model for FollowStatusOK.
+type FollowStatusOK = FollowStatus
 
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = Error
@@ -119,6 +133,12 @@ type UpsertFCMTokenJSONBody struct {
 	Token     string    `json:"token"`
 }
 
+// GetTasksParams defines parameters for GetTasks.
+type GetTasksParams struct {
+	// PoolId Pool ID
+	PoolId *PoolId `form:"poolId,omitempty" json:"poolId,omitempty"`
+}
+
 // UpsertFCMTokenJSONRequestBody defines body for UpsertFCMToken for application/json ContentType.
 type UpsertFCMTokenJSONRequestBody UpsertFCMTokenJSONBody
 
@@ -133,24 +153,18 @@ type UpdateUserJSONRequestBody = UpdateUserInput
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get Notifications
+	// (GET /notifications)
+	GetNotifications(c *gin.Context)
 	// Upsert FCM Token
-	// (PATCH /fcm/token)
+	// (PATCH /notifications/fcmToken)
 	UpsertFCMToken(c *gin.Context)
-	// Get Pools
-	// (GET /pools)
-	GetPools(c *gin.Context)
-	// Create Pool
-	// (POST /pools)
-	CreatePool(c *gin.Context)
-	// Delete Pool
-	// (DELETE /pools/{id})
-	DeletePool(c *gin.Context, id Id)
 	// Get Pool
 	// (GET /pools/{id})
 	GetPool(c *gin.Context, id Id)
 	// Get Tasks
 	// (GET /tasks)
-	GetTasks(c *gin.Context)
+	GetTasks(c *gin.Context, params GetTasksParams)
 	// Create Task
 	// (POST /tasks)
 	CreateTask(c *gin.Context)
@@ -178,6 +192,18 @@ type ServerInterface interface {
 	// Update User
 	// (PATCH /users/{uid})
 	UpdateUser(c *gin.Context, uid Uid)
+	// Unfollow User
+	// (DELETE /users/{uid}/follow)
+	UnfollowUser(c *gin.Context, uid Uid)
+	// Get Follow Reqest
+	// (GET /users/{uid}/follow)
+	GetFollowRequest(c *gin.Context, uid Uid)
+	// Approve Follow Request
+	// (PATCH /users/{uid}/follow)
+	ApproveFollowRequest(c *gin.Context, uid Uid)
+	// Follow User
+	// (POST /users/{uid}/follow)
+	FollowUser(c *gin.Context, uid Uid)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -188,6 +214,23 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetNotifications operation middleware
+func (siw *ServerInterfaceWrapper) GetNotifications(c *gin.Context) {
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetNotifications(c)
+}
 
 // UpsertFCMToken operation middleware
 func (siw *ServerInterfaceWrapper) UpsertFCMToken(c *gin.Context) {
@@ -204,68 +247,6 @@ func (siw *ServerInterfaceWrapper) UpsertFCMToken(c *gin.Context) {
 	}
 
 	siw.Handler.UpsertFCMToken(c)
-}
-
-// GetPools operation middleware
-func (siw *ServerInterfaceWrapper) GetPools(c *gin.Context) {
-
-	c.Set(AppCheckScopes, []string{})
-
-	c.Set(AuthBearerScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetPools(c)
-}
-
-// CreatePool operation middleware
-func (siw *ServerInterfaceWrapper) CreatePool(c *gin.Context) {
-
-	c.Set(AppCheckScopes, []string{})
-
-	c.Set(AuthBearerScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.CreatePool(c)
-}
-
-// DeletePool operation middleware
-func (siw *ServerInterfaceWrapper) DeletePool(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id Id
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(AppCheckScopes, []string{})
-
-	c.Set(AuthBearerScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.DeletePool(c, id)
 }
 
 // GetPool operation middleware
@@ -299,9 +280,22 @@ func (siw *ServerInterfaceWrapper) GetPool(c *gin.Context) {
 // GetTasks operation middleware
 func (siw *ServerInterfaceWrapper) GetTasks(c *gin.Context) {
 
+	var err error
+
 	c.Set(AppCheckScopes, []string{})
 
 	c.Set(AuthBearerScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTasksParams
+
+	// ------------- Optional query parameter "poolId" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "poolId", c.Request.URL.Query(), &params.PoolId)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter poolId: %w", err), http.StatusBadRequest)
+		return
+	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -310,7 +304,7 @@ func (siw *ServerInterfaceWrapper) GetTasks(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetTasks(c)
+	siw.Handler.GetTasks(c, params)
 }
 
 // CreateTask operation middleware
@@ -532,6 +526,118 @@ func (siw *ServerInterfaceWrapper) UpdateUser(c *gin.Context) {
 	siw.Handler.UpdateUser(c, uid)
 }
 
+// UnfollowUser operation middleware
+func (siw *ServerInterfaceWrapper) UnfollowUser(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UnfollowUser(c, uid)
+}
+
+// GetFollowRequest operation middleware
+func (siw *ServerInterfaceWrapper) GetFollowRequest(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFollowRequest(c, uid)
+}
+
+// ApproveFollowRequest operation middleware
+func (siw *ServerInterfaceWrapper) ApproveFollowRequest(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ApproveFollowRequest(c, uid)
+}
+
+// FollowUser operation middleware
+func (siw *ServerInterfaceWrapper) FollowUser(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.FollowUser(c, uid)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -559,10 +665,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.PATCH(options.BaseURL+"/fcm/token", wrapper.UpsertFCMToken)
-	router.GET(options.BaseURL+"/pools", wrapper.GetPools)
-	router.POST(options.BaseURL+"/pools", wrapper.CreatePool)
-	router.DELETE(options.BaseURL+"/pools/:id", wrapper.DeletePool)
+	router.GET(options.BaseURL+"/notifications", wrapper.GetNotifications)
+	router.PATCH(options.BaseURL+"/notifications/fcmToken", wrapper.UpsertFCMToken)
 	router.GET(options.BaseURL+"/pools/:id", wrapper.GetPool)
 	router.GET(options.BaseURL+"/tasks", wrapper.GetTasks)
 	router.POST(options.BaseURL+"/tasks", wrapper.CreateTask)
@@ -574,4 +678,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/users/:uid", wrapper.DeleteUser)
 	router.GET(options.BaseURL+"/users/:uid", wrapper.GetUser)
 	router.PATCH(options.BaseURL+"/users/:uid", wrapper.UpdateUser)
+	router.DELETE(options.BaseURL+"/users/:uid/follow", wrapper.UnfollowUser)
+	router.GET(options.BaseURL+"/users/:uid/follow", wrapper.GetFollowRequest)
+	router.PATCH(options.BaseURL+"/users/:uid/follow", wrapper.ApproveFollowRequest)
+	router.POST(options.BaseURL+"/users/:uid/follow", wrapper.FollowUser)
 }

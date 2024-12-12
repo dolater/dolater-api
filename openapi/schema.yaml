@@ -15,8 +15,10 @@ servers:
 paths:
   /users:
     get:
+      tags:
+        - user
       summary: Get Users
-      description: Get users (Friends)
+      description: Get users (Related to the authenticated user)
       operationId: getUsers
       security:
         - AppCheck: []
@@ -35,8 +37,10 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
+      tags:
+        - user
       summary: Create User
-      description: Create a user (Registration)
+      description: Create a user (Register the authenticated user)
       operationId: createUser
       security:
         - AppCheck: []
@@ -54,6 +58,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
   /users/{uid}:
     get:
+      tags:
+        - user
       summary: Get User
       description: Get a user
       operationId: getUser
@@ -72,6 +78,8 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     patch:
+      tags:
+        - user
       summary: Update User
       description: Update a user
       operationId: updateUser
@@ -96,6 +104,8 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     delete:
+      tags:
+        - user
       summary: Delete User
       description: Delete a user
       operationId: deleteUser
@@ -113,47 +123,91 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
-  /pools:
+  /users/{uid}/follow:
     get:
-      summary: Get Pools
-      description: Get all pools
-      operationId: getPools
+      tags:
+        - user
+      summary: Get Follow Reqest
+      description: Get follow request from a user
+      operationId: getFollowRequest
       security:
         - AppCheck: []
         - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
       responses:
         200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TaskPool"
+          $ref: "#/components/responses/FollowStatusOK"
         401:
           $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
-      summary: Create Pool
-      description: Create a pool
-      operationId: createPool
+      tags:
+        - user
+      summary: Follow User
+      description: Request to follow a user
+      operationId: followUser
       security:
         - AppCheck: []
         - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
       responses:
-        201:
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskPool"
+        200:
+          $ref: "#/components/responses/FollowStatusOK"
         401:
           $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - user
+      summary: Approve Follow Request
+      description: Approve follow request from a user
+      operationId: approveFollowRequest
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
+      responses:
+        200:
+          $ref: "#/components/responses/FollowStatusOK"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - user
+      summary: Unfollow User
+      description: Unfollow a user
+      operationId: unfollowUser
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
+      responses:
+        204:
+          $ref: "#/components/responses/NoContent"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
   /pools/{id}:
     get:
+      tags:
+        - pool
       summary: Get Pool
       description: Get a pool
       operationId: getPool
@@ -171,32 +225,18 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
-    delete:
-      summary: Delete Pool
-      description: Delete a pool
-      operationId: deletePool
-      security:
-        - AppCheck: []
-        - AuthBearer: []
-      parameters:
-        - $ref: "#/components/parameters/id"
-      responses:
-        204:
-          description: No Content
-        401:
-          $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
-        500:
-          $ref: "#/components/responses/InternalServerError"
   /tasks:
     get:
+      tags:
+        - task
       summary: Get Tasks
       description: Get all tasks
       operationId: getTasks
       security:
         - AppCheck: []
         - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/poolId"
       responses:
         200:
           description: OK
@@ -211,6 +251,8 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     post:
+      tags:
+        - task
       summary: Create Task
       description: Create a task
       operationId: createTask
@@ -236,6 +278,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
   /tasks/{id}:
     get:
+      tags:
+        - task
       summary: Get Task
       description: Get a task
       operationId: getTask
@@ -258,6 +302,8 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     patch:
+      tags:
+        - task
       summary: Update Task
       description: Update a task
       operationId: updateTask
@@ -282,6 +328,8 @@ paths:
         500:
           $ref: "#/components/responses/InternalServerError"
     delete:
+      tags:
+        - task
       summary: Delete Task
       description: Delete a task
       operationId: deleteTask
@@ -299,8 +347,33 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
-  /fcm/token:
+  /notifications:
+    get:
+      tags:
+        - notification
+      summary: Get Notifications
+      description: Get notifications
+      operationId: getNotifications
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+  /notifications/fcmToken:
     patch:
+      tags:
+        - notification
       summary: Upsert FCM Token
       description: Upsert Firebase Cloud Messaging registration token
       operationId: upsertFCMToken
@@ -342,7 +415,11 @@ components:
         followings:
           type: array
           items:
-            $ref: "#/components/schemas/Following"
+            $ref: "#/components/schemas/FollowStatus"
+        followers:
+          type: array
+          items:
+            $ref: "#/components/schemas/FollowStatus"
       required:
         - id
         - displayName
@@ -351,6 +428,7 @@ components:
         - archivedTaskPool
         - pendingTaskPool
         - followings
+        - followers
     UpdateUserInput:
       type: object
       properties:
@@ -360,10 +438,12 @@ components:
           type: string
           format: uri
       required: []
-    Following:
+    FollowStatus:
       type: object
       properties:
-        user:
+        from:
+          $ref: "#/components/schemas/User"
+        to:
           $ref: "#/components/schemas/User"
         requestedAt:
           type: string
@@ -371,33 +451,26 @@ components:
         approvedAt:
           type: string
           format: date-time
-        isFollowed:
-          type: boolean
       required:
-        - user
-        - isFollowed
+        - from
+        - to
+        - requestedAt
     TaskPool:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        tasks:
-          type: array
-          items:
-            $ref: "#/components/schemas/Task"
+        owner:
+          $ref: "#/components/schemas/User"
       required:
         - id
-        - owner
-        - tasks
     Task:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        title:
-          type: string
         url:
           type: string
           format: uri
@@ -410,24 +483,23 @@ components:
         archivedAt:
           type: string
           format: date-time
-        deletedAt:
-          type: string
-          format: date-time
+        owner:
+          $ref: "#/components/schemas/User"
+        pool:
+          $ref: "#/components/schemas/TaskPool"
       required:
         - id
-        - title
         - url
         - createdAt
+        - owner
+        - pool
     CreateTaskInput:
       type: object
       properties:
-        title:
-          type: string
         url:
           type: string
           format: uri
       required:
-        - title
         - url
     UpdateTaskInput:
       type: object
@@ -446,6 +518,22 @@ components:
         pool:
           $ref: "#/components/schemas/TaskPool"
       required: []
+    Notification:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        url:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - title
+        - createdAt
   parameters:
     id:
       name: id
@@ -462,6 +550,14 @@ components:
       description: UID
       schema:
         type: string
+    poolId:
+      name: poolId
+      in: query
+      required: false
+      description: Pool ID
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     AuthBearer:
       type: http
@@ -495,6 +591,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
+    FollowStatusOK:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FollowStatus"
     TaskPoolOK:
       description: OK
       content:
