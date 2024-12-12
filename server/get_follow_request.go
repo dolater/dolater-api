@@ -37,6 +37,73 @@ func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	user := model.User{}
-	c.JSON(http.StatusOK, user)
+	followStatus := model.FollowStatus{
+		FromId: uid,
+		ToId:   token.UID,
+	}
+
+	if err := db.First(&followStatus).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusNotFound, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
+	fromUser := model.User{
+		Id: followStatus.FromId,
+	}
+	toUser := model.User{
+		Id: followStatus.ToId,
+	}
+	if err := db.First(&fromUser).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusNotFound, api.Error{
+			Message: &message,
+		})
+		return
+	}
+	if err := db.First(&toUser).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusNotFound, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
+	response := api.FollowStatus{
+		From: api.User{
+			Id: fromUser.Id,
+			DisplayName: func() string {
+				if fromUser.DisplayName == nil {
+					return ""
+				}
+				return *fromUser.DisplayName
+			}(),
+			PhotoURL: func() string {
+				if fromUser.PhotoURL == nil {
+					return ""
+				}
+				return *fromUser.PhotoURL
+			}(),
+		},
+		To: api.User{
+			Id: toUser.Id,
+			DisplayName: func() string {
+				if toUser.DisplayName == nil {
+					return ""
+				}
+				return *toUser.DisplayName
+			}(),
+			PhotoURL: func() string {
+				if toUser.PhotoURL == nil {
+					return ""
+				}
+				return *toUser.PhotoURL
+			}(),
+		},
+		RequestedAt: followStatus.RequestedAt,
+		ApprovedAt:  followStatus.ApprovedAt,
+	}
+	c.JSON(http.StatusOK, response)
 }

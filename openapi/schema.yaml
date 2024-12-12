@@ -424,11 +424,6 @@ components:
         - id
         - displayName
         - photoURL
-        - activeTaskPool
-        - archivedTaskPool
-        - pendingTaskPool
-        - followings
-        - followers
     UpdateUserInput:
       type: object
       properties:

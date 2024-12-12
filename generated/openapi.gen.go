@@ -88,14 +88,14 @@ type UpdateUserInput struct {
 
 // User defines model for User.
 type User struct {
-	ActiveTaskPool   TaskPool       `json:"activeTaskPool"`
-	ArchivedTaskPool TaskPool       `json:"archivedTaskPool"`
-	DisplayName      string         `json:"displayName"`
-	Followers        []FollowStatus `json:"followers"`
-	Followings       []FollowStatus `json:"followings"`
-	Id               string         `json:"id"`
-	PendingTaskPool  TaskPool       `json:"pendingTaskPool"`
-	PhotoURL         string         `json:"photoURL"`
+	ActiveTaskPool   *TaskPool       `json:"activeTaskPool,omitempty"`
+	ArchivedTaskPool *TaskPool       `json:"archivedTaskPool,omitempty"`
+	DisplayName      string          `json:"displayName"`
+	Followers        *[]FollowStatus `json:"followers,omitempty"`
+	Followings       *[]FollowStatus `json:"followings,omitempty"`
+	Id               string          `json:"id"`
+	PendingTaskPool  *TaskPool       `json:"pendingTaskPool,omitempty"`
+	PhotoURL         string          `json:"photoURL"`
 }
 
 // Id defines model for id.
