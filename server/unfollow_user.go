@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (s *Server) UnfollowUser(c *gin.Context, uid string) {
@@ -37,6 +39,20 @@ func (s *Server) UnfollowUser(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	user := model.User{}
-	c.JSON(http.StatusNoContent, user)
+	followStatus := model.FollowStatus{
+		FromId: token.UID,
+		ToId:   uid,
+	}
+
+	if err := db.Delete(&followStatus).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	c.Status(http.StatusNoContent)
 }
