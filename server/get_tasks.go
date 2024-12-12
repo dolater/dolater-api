@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) GetTasks(c *gin.Context, pram api.GetTasksParams) {
+func (s *Server) GetTasks(c *gin.Context, poolId api.GetTasksParams) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
