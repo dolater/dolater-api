@@ -8,13 +8,12 @@ import (
 
 type Task struct {
 	Id          uuid.UUID
-	UserId      string
-	Title       *string
 	URL         *string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
 	ArchivedAt  *time.Time
-	DeletedAt   *time.Time
+	OwnerId     *string
+	Owner       *User
 	PoolId      *uuid.UUID
 	Pool        *TaskPool
 }

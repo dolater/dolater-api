@@ -18,6 +18,13 @@ const (
 	AuthBearerScopes = "AuthBearer.Scopes"
 )
 
+// Defines values for TaskPoolType.
+const (
+	Active   TaskPoolType = "active"
+	Archived TaskPoolType = "archived"
+	Pending  TaskPoolType = "pending"
+)
+
 // CreateTaskInput defines model for CreateTaskInput.
 type CreateTaskInput struct {
 	Url string `json:"url"`
@@ -59,15 +66,18 @@ type Task struct {
 type TaskPool struct {
 	Id    openapi_types.UUID `json:"id"`
 	Owner *User              `json:"owner,omitempty"`
+	Type  TaskPoolType       `json:"type"`
 }
+
+// TaskPoolType defines model for TaskPool.Type.
+type TaskPoolType string
 
 // UpdateTaskInput defines model for UpdateTaskInput.
 type UpdateTaskInput struct {
-	ArchivedAt  *time.Time `json:"archivedAt,omitempty"`
-	CompletedAt *time.Time `json:"completedAt,omitempty"`
-	Pool        *TaskPool  `json:"pool,omitempty"`
-	Title       *string    `json:"title,omitempty"`
-	Url         *string    `json:"url,omitempty"`
+	ArchivedAt  *time.Time          `json:"archivedAt,omitempty"`
+	CompletedAt *time.Time          `json:"completedAt,omitempty"`
+	PoolId      *openapi_types.UUID `json:"poolId,omitempty"`
+	Url         *string             `json:"url,omitempty"`
 }
 
 // UpdateUserInput defines model for UpdateUserInput.
