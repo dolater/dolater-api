@@ -42,10 +42,10 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 
 	task := model.Task{
 		Id:          id,
-		Title:       requestBody.Title,
 		URL:         requestBody.Url,
 		CompletedAt: requestBody.CompletedAt,
 		ArchivedAt:  requestBody.ArchivedAt,
+		PoolId:      requestBody.PoolId,
 	}
 
 	c.JSON(http.StatusOK, task)

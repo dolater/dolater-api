@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) GetTasks(c *gin.Context, poolId api.GetTasksParams) {
+func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -40,7 +40,10 @@ func (s *Server) GetTasks(c *gin.Context, poolId api.GetTasksParams) {
 	tasks := []model.Task{}
 
 	if err := db.
-		Where(&model.Task{UserId: token.UID}).
+		Where(&model.Task{
+			OwnerId: &token.UID,
+			PoolId:  params.PoolId,
+		}).
 		Find(&tasks).
 		Error; err != nil {
 		message := err.Error()

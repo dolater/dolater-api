@@ -48,9 +48,9 @@ func (s *Server) CreateTask(c *gin.Context) {
 	}
 
 	task := model.Task{
-		Id:     uuid.New(),
-		UserId: token.UID,
-		URL:    &requestBody.Url,
+		Id:      uuid.New(),
+		OwnerId: &token.UID,
+		URL:     &requestBody.Url,
 	}
 
 	if err := db.Create(&task).Error; err != nil {
