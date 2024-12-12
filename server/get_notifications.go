@@ -37,6 +37,6 @@ func (s *Server) GetNotifications(c *gin.Context) {
 		sqldb.Close()
 	}()
 
-	notification := model.Notification{}
+	notification := []model.Notification{}
 	c.JSON(http.StatusOK, notification)
 }
