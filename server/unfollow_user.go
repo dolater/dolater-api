@@ -37,6 +37,18 @@ func (s *Server) UnfollowUser(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	user := model.User{}
-	c.JSON(http.StatusNoContent, user)
+	followStatus := model.FollowStatus{
+		FromId: token.UID,
+		ToId:   uid,
+	}
+
+	if err := db.Delete(&followStatus).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
