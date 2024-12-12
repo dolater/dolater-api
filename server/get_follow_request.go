@@ -37,6 +37,17 @@ func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	user := model.User{}
-	c.JSON(http.StatusOK, user)
+	followStatus := model.FollowStatus{
+		FromId: uid,
+		ToId:   token.UID,
+	}
+
+	if err := db.First(&followStatus).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusNotFound, api.Error{
+			Message: &message,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, followStatus)
 }
