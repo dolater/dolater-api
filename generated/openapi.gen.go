@@ -45,10 +45,11 @@ type FollowStatus struct {
 
 // Notification defines model for Notification.
 type Notification struct {
-	Body      *string   `json:"body,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-	Title     string    `json:"title"`
-	Url       *string   `json:"url,omitempty"`
+	Body      *string            `json:"body,omitempty"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Title     string             `json:"title"`
+	Url       *string            `json:"url,omitempty"`
 }
 
 // Task defines model for Task.

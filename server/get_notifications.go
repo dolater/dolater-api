@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (s *Server) GetNotifications(c *gin.Context) {
@@ -37,6 +39,28 @@ func (s *Server) GetNotifications(c *gin.Context) {
 		sqldb.Close()
 	}()
 
-	notification := []model.Notification{}
-	c.JSON(http.StatusOK, notification)
+	notifications := []model.Notification{}
+
+	if err := db.Where(&model.Notification{UserId: token.UID}).Find(&notifications).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	response := []api.Notification{}
+	for _, notification := range notifications {
+		response = append(response, api.Notification{
+			Id:        notification.Id,
+			Title:     notification.Title,
+			Body:      &notification.Body,
+			Url:       &notification.URL,
+			CreatedAt: notification.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }

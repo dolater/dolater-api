@@ -522,6 +522,9 @@ components:
     Notification:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         title:
           type: string
         body:
@@ -533,6 +536,7 @@ components:
           type: string
           format: date-time
       required:
+        - id
         - title
         - createdAt
   parameters:

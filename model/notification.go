@@ -7,7 +7,7 @@ import (
 )
 
 type Notification struct {
-	Id        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Id        uuid.UUID
 	UserId    string
 	Title     string
 	Body      string
