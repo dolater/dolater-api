@@ -43,6 +43,7 @@ func Migrate() {
 	if err != nil {
 		log.Println("Failed to migrate database")
 	}
+
 	err = db.AutoMigrate(&model.Notification{})
 	if err != nil {
 		log.Println("Failed to migrate database")
