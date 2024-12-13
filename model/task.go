@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Task struct {
 	Id          uuid.UUID
 	URL         *string
-	CreatedAt   time.Time
 	CompletedAt *time.Time
 	RemovedAt   *time.Time
 	ArchivedAt  *time.Time
@@ -17,4 +17,8 @@ type Task struct {
 	Owner       *User
 	PoolId      *uuid.UUID
 	Pool        *TaskPool
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Deleted   gorm.DeletedAt
 }
