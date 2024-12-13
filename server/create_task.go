@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (s *Server) CreateTask(c *gin.Context) {
@@ -47,10 +49,28 @@ func (s *Server) CreateTask(c *gin.Context) {
 		return
 	}
 
+	activePool := model.TaskPool{
+		OwnerId: token.UID,
+		Type:    "active",
+	}
+
+	if err := db.
+		First(&activePool).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
 	task := model.Task{
 		Id:      uuid.New(),
 		OwnerId: &token.UID,
 		URL:     &requestBody.Url,
+		PoolId:  &activePool.Id,
 	}
 
 	if err := db.Create(&task).Error; err != nil {
@@ -60,5 +80,58 @@ func (s *Server) CreateTask(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusCreated, task)
+	owner := model.User{
+		Id: func() string {
+			if task.OwnerId == nil {
+				return ""
+			}
+			return *task.OwnerId
+		}(),
+	}
+
+	if err := db.
+		First(&owner).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	response := api.Task{
+		Id: task.Id,
+		Url: func() string {
+			if task.URL == nil {
+				return ""
+			}
+			return *task.URL
+		}(),
+		CreatedAt:   task.CreatedAt,
+		CompletedAt: task.CompletedAt,
+		ArchivedAt:  task.ArchivedAt,
+		Owner: api.User{
+			Id: owner.Id,
+			DisplayName: func() string {
+				if owner.DisplayName == nil {
+					return ""
+				}
+				return *owner.DisplayName
+			}(),
+			PhotoURL: func() string {
+				if owner.PhotoURL == nil {
+					return ""
+				}
+				return *owner.PhotoURL
+			}(),
+		},
+		Pool: api.TaskPool{
+			Id:   activePool.Id,
+			Type: api.TaskPoolType(activePool.Type),
+		},
+	}
+
+	c.JSON(http.StatusCreated, response)
 }
