@@ -80,6 +80,7 @@ type UpdateTaskInput struct {
 	ArchivedAt  *time.Time          `json:"archivedAt,omitempty"`
 	CompletedAt *time.Time          `json:"completedAt,omitempty"`
 	PoolId      *openapi_types.UUID `json:"poolId,omitempty"`
+	RemovedAt   *time.Time          `json:"removedAt,omitempty"`
 	Url         *string             `json:"url,omitempty"`
 }
 
