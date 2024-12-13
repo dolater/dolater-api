@@ -204,6 +204,29 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
+  /pools:
+    get:
+      tags:
+        - pool
+      summary: Get Pools
+      description: Get all pools the authenticated user has
+      operationId: getPools
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskPool"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
   /pools/{id}:
     get:
       tags:
@@ -406,10 +429,6 @@ components:
         photoURL:
           type: string
           format: uri
-        pools:
-          type: array
-          items:
-            $ref: "#/components/schemas/TaskPool"
       required:
         - id
         - displayName
