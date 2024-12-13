@@ -71,8 +71,6 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}
 	}
 
-	taskPool := []model.TaskPool{}
-
 	activeTaskPool := model.TaskPool{
 		Id:      uuid.New(),
 		OwnerId: user.Id,
@@ -91,7 +89,14 @@ func (s *Server) CreateUser(c *gin.Context) {
 		Type:    "pending",
 	}
 
-	taskPool = append(taskPool, activeTaskPool, archivedTaskPool, pendingTaskPool)
+	binTaskPool := model.TaskPool{
+		Id:      uuid.New(),
+		OwnerId: user.Id,
+		Type:    "bin",
+	}
+
+	taskPool := []model.TaskPool{}
+	taskPool = append(taskPool, activeTaskPool, archivedTaskPool, pendingTaskPool, binTaskPool)
 
 	if err := db.Create(&taskPool).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
