@@ -11,6 +11,7 @@ type Task struct {
 	URL         *string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
+	RemovedAt   *time.Time
 	ArchivedAt  *time.Time
 	OwnerId     *string
 	Owner       *User
