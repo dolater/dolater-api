@@ -98,6 +98,22 @@ func (s *Server) GetTask(c *gin.Context, id uuid.UUID) {
 		}
 	}
 
+	poolOwner := model.User{
+		Id: pool.OwnerId,
+	}
+
+	if err := db.
+		First(&poolOwner).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
 	response := api.Task{
 		Id: task.Id,
 		Url: func() string {
@@ -125,7 +141,22 @@ func (s *Server) GetTask(c *gin.Context, id uuid.UUID) {
 			}(),
 		},
 		Pool: api.TaskPool{
-			Id:   pool.Id,
+			Id: pool.Id,
+			Owner: &api.User{
+				Id: poolOwner.Id,
+				DisplayName: func() string {
+					if poolOwner.DisplayName == nil {
+						return ""
+					}
+					return *poolOwner.DisplayName
+				}(),
+				PhotoURL: func() string {
+					if poolOwner.PhotoURL == nil {
+						return ""
+					}
+					return *poolOwner.PhotoURL
+				}(),
+			},
 			Type: api.TaskPoolType(pool.Type),
 		},
 	}
