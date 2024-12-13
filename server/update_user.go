@@ -54,7 +54,7 @@ func (s *Server) UpdateUser(c *gin.Context, uid string) {
 		PhotoURL:    requestBody.PhotoURL,
 	}
 
-	if err := db.Save(&user).Error; err != nil {
+	if err := db.Updates(&user).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
