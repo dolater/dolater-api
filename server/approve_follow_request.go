@@ -42,13 +42,21 @@ func (s *Server) ApproveFollowRequest(c *gin.Context, uid string) {
 
 	approveAt := time.Now()
 
-	followStatus := model.FollowStatus{
+	fromFollowStatus := model.FollowStatus{
 		FromId:     uid,
 		ToId:       token.UID,
 		ApprovedAt: &approveAt,
 	}
 
-	if err := db.Updates(&followStatus).Error; err != nil {
+	toFollowStatus := model.FollowStatus{
+		FromId:     token.UID,
+		ToId:       uid,
+		ApprovedAt: &approveAt,
+	}
+
+	followStatuses := []model.FollowStatus{fromFollowStatus, toFollowStatus}
+
+	if err := db.Updates(&followStatuses).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -57,7 +65,8 @@ func (s *Server) ApproveFollowRequest(c *gin.Context, uid string) {
 			return
 		}
 	}
-	if err := db.First(&followStatus).Error; err != nil {
+
+	if err := db.First(&fromFollowStatus).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -68,10 +77,10 @@ func (s *Server) ApproveFollowRequest(c *gin.Context, uid string) {
 	}
 
 	fromUser := model.User{
-		Id: followStatus.FromId,
+		Id: fromFollowStatus.FromId,
 	}
 	toUser := model.User{
-		Id: followStatus.ToId,
+		Id: fromFollowStatus.ToId,
 	}
 	if err := db.First(&fromUser).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -123,8 +132,8 @@ func (s *Server) ApproveFollowRequest(c *gin.Context, uid string) {
 				return *toUser.PhotoURL
 			}(),
 		},
-		RequestedAt: followStatus.RequestedAt,
-		ApprovedAt:  followStatus.ApprovedAt,
+		RequestedAt: fromFollowStatus.RequestedAt,
+		ApprovedAt:  fromFollowStatus.ApprovedAt,
 	}
 
 	c.JSON(http.StatusOK, response)

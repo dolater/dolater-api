@@ -56,5 +56,79 @@ func (s *Server) GetTask(c *gin.Context, id uuid.UUID) {
 		}
 	}
 
-	c.JSON(http.StatusOK, task)
+	owner := model.User{
+		Id: func() string {
+			if task.OwnerId == nil {
+				return ""
+			}
+			return *task.OwnerId
+		}(),
+	}
+
+	if err := db.
+		First(&owner).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	pool := model.TaskPool{
+		Id: func() uuid.UUID {
+			if task.PoolId == nil {
+				return uuid.UUID{}
+			}
+			return *task.PoolId
+		}(),
+	}
+
+	if err := db.
+		First(&pool).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	response := api.Task{
+		Id: task.Id,
+		Url: func() string {
+			if task.URL == nil {
+				return ""
+			}
+			return *task.URL
+		}(),
+		CreatedAt:   task.CreatedAt,
+		ArchivedAt:  task.ArchivedAt,
+		CompletedAt: task.CompletedAt,
+		Owner: api.User{
+			Id: owner.Id,
+			DisplayName: func() string {
+				if owner.DisplayName == nil {
+					return ""
+				}
+				return *owner.DisplayName
+			}(),
+			PhotoURL: func() string {
+				if owner.PhotoURL == nil {
+					return ""
+				}
+				return *owner.PhotoURL
+			}(),
+		},
+		Pool: api.TaskPool{
+			Id:   pool.Id,
+			Type: api.TaskPoolType(pool.Type),
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
 }
