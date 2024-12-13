@@ -9,6 +9,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) UpsertFCMToken(c *gin.Context) {
@@ -49,17 +50,20 @@ func (s *Server) UpsertFCMToken(c *gin.Context) {
 	fcmToken := model.FCMToken{
 		RegistrationToken: requestBody.Token,
 		UserId:            token.UID,
-		Timestamp:         requestBody.Timestamp,
 	}
 
-	if err := db.Save(&fcmToken).Error; err != nil {
-		if err.Error() != "record not found" {
-			message := err.Error()
-			c.JSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
-		}
+	if err := db.
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "registration_token"}},
+			DoUpdates: clause.AssignmentColumns([]string{"updated_at"}),
+		}).
+		Create(&fcmToken).
+		Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
 	}
 
 	c.Status(http.StatusNoContent)

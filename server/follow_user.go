@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
@@ -12,6 +11,7 @@ import (
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) FollowUser(c *gin.Context, uid string) {
@@ -49,12 +49,16 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 	}()
 
 	followStatus := model.FollowStatus{
-		FromId:      token.UID,
-		ToId:        uid,
-		RequestedAt: time.Now(),
+		FromId: token.UID,
+		ToId:   uid,
 	}
 
-	if err := db.Create(&followStatus).Error; err != nil {
+	if err := db.
+		Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).
+		Create(&followStatus).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -119,8 +123,7 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 				return *toUser.PhotoURL
 			}(),
 		},
-		RequestedAt: followStatus.RequestedAt,
-		ApprovedAt:  followStatus.ApprovedAt,
+		Timestamp: followStatus.CreatedAt,
 	}
 
 	c.JSON(http.StatusOK, response)

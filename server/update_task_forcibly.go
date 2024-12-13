@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
+func (s *Server) UpdateTaskForcibly(c *gin.Context, id uuid.UUID) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -59,7 +59,7 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		PoolId:      requestBody.PoolId,
 	}
 
-	if err := db.Clauses(clause.Returning{}).Updates(&task).Error; err != nil {
+	if err := db.Clauses(clause.Returning{}).Save(&task).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{

@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) CreateTask(c *gin.Context) {
@@ -73,7 +74,12 @@ func (s *Server) CreateTask(c *gin.Context) {
 		PoolId:  &activePool.Id,
 	}
 
-	if err := db.Create(&task).Error; err != nil {
+	if err := db.
+		Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).
+		Create(&task).
+		Error; err != nil {
 		message := err.Error()
 		c.JSON(http.StatusInternalServerError, api.Error{
 			Message: &message,
