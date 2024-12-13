@@ -107,7 +107,7 @@ func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 		}
 
 		if err := db.
-			First(&pool).
+			First(&poolOwner).
 			Error; err != nil {
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				message := err.Error()
