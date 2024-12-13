@@ -49,10 +49,28 @@ func (s *Server) CreateTask(c *gin.Context) {
 		return
 	}
 
+	activePool := model.TaskPool{
+		OwnerId: token.UID,
+		Type:    "active",
+	}
+
+	if err := db.
+		First(&activePool).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
 	task := model.Task{
 		Id:      uuid.New(),
 		OwnerId: &token.UID,
 		URL:     &requestBody.Url,
+		PoolId:  &activePool.Id,
 	}
 
 	if err := db.Create(&task).Error; err != nil {
@@ -108,6 +126,10 @@ func (s *Server) CreateTask(c *gin.Context) {
 				}
 				return *owner.PhotoURL
 			}(),
+		},
+		Pool: api.TaskPool{
+			Id:   activePool.Id,
+			Type: api.TaskPoolType(activePool.Type),
 		},
 	}
 
