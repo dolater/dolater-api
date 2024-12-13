@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
@@ -58,17 +59,7 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		PoolId:      requestBody.PoolId,
 	}
 
-	if err := db.Updates(&task).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			message := err.Error()
-			c.JSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
-		}
-	}
-
-	if err := db.First(&task).Error; err != nil {
+	if err := db.Clauses(clause.Returning{}).Updates(&task).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{

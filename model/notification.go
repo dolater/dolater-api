@@ -4,13 +4,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Notification struct {
-	Id        uuid.UUID
-	UserId    string
-	Title     string
-	Body      string
-	URL       string
+	Id     uuid.UUID
+	UserId string
+	Title  string
+	Body   string
+	URL    string
+
 	CreatedAt time.Time
+	UpdatedAt time.Time
+	Deleted   gorm.DeletedAt
 }

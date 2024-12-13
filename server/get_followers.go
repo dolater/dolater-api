@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
@@ -13,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
+func (s *Server) GetFollowers(c *gin.Context, uid string) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -39,12 +40,13 @@ func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
 		sqldb.Close()
 	}()
 
-	followStatus := model.FollowStatus{
-		FromId: uid,
-		ToId:   token.UID,
-	}
-
-	if err := db.First(&followStatus).Error; err != nil {
+	var followStatus []model.FollowStatus
+	if err := db.
+		Where(&model.FollowStatus{
+			ToId: uid,
+		}).
+		Find(&followStatus).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -54,22 +56,23 @@ func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
 		}
 	}
 
-	fromUser := model.User{
-		Id: followStatus.FromId,
-	}
-	toUser := model.User{
-		Id: followStatus.ToId,
-	}
-	if err := db.First(&fromUser).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			message := err.Error()
-			c.JSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
+	uids := []string{}
+	for _, fs := range followStatus {
+		if fs.FromId != token.UID && !slices.Contains(uids, fs.FromId) {
+			uids = append(uids, fs.FromId)
+			continue
+		}
+		if fs.ToId != token.UID && !slices.Contains(uids, fs.ToId) {
+			uids = append(uids, fs.ToId)
+			continue
 		}
 	}
-	if err := db.First(&toUser).Error; err != nil {
+
+	var users []model.User
+	if err := db.
+		Where("id IN ?", uids).
+		Find(&users).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -79,39 +82,24 @@ func (s *Server) GetFollowRequest(c *gin.Context, uid string) {
 		}
 	}
 
-	response := api.FollowStatus{
-		From: api.User{
-			Id: fromUser.Id,
+	response := []api.User{}
+	for _, user := range users {
+		response = append(response, api.User{
+			Id: user.Id,
 			DisplayName: func() string {
-				if fromUser.DisplayName == nil {
+				if user.DisplayName == nil {
 					return ""
 				}
-				return *fromUser.DisplayName
+				return *user.DisplayName
 			}(),
 			PhotoURL: func() string {
-				if fromUser.PhotoURL == nil {
+				if user.PhotoURL == nil {
 					return ""
 				}
-				return *fromUser.PhotoURL
+				return *user.PhotoURL
 			}(),
-		},
-		To: api.User{
-			Id: toUser.Id,
-			DisplayName: func() string {
-				if toUser.DisplayName == nil {
-					return ""
-				}
-				return *toUser.DisplayName
-			}(),
-			PhotoURL: func() string {
-				if toUser.PhotoURL == nil {
-					return ""
-				}
-				return *toUser.PhotoURL
-			}(),
-		},
-		RequestedAt: followStatus.RequestedAt,
-		ApprovedAt:  followStatus.ApprovedAt,
+		})
 	}
+
 	c.JSON(http.StatusOK, response)
 }

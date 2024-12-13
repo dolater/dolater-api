@@ -18,20 +18,14 @@ paths:
       tags:
         - user
       summary: Get Users
-      description: Get users (Related to the authenticated user)
+      description: Get followings and followers of the authenticated user
       operationId: getUsers
       security:
         - AppCheck: []
         - AuthBearer: []
       responses:
         200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
+          $ref: "#/components/responses/UsersOK"
         401:
           $ref: "#/components/responses/Unauthorized"
         500:
@@ -123,13 +117,13 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
-  /users/{uid}/follow:
+  /users/{uid}/followings:
     get:
       tags:
         - user
-      summary: Get Follow Reqest
-      description: Get follow request from a user
-      operationId: getFollowRequest
+      summary: Get Followings
+      description: Get followings of a user
+      operationId: getFollowings
       security:
         - AppCheck: []
         - AuthBearer: []
@@ -137,39 +131,56 @@ paths:
         - $ref: "#/components/parameters/uid"
       responses:
         200:
-          $ref: "#/components/responses/FollowStatusOK"
+          $ref: "#/components/responses/UsersOK"
         401:
           $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
+  /users/{uid}/followers:
+    get:
+      tags:
+        - user
+      summary: Get Followers
+      description: Get followers of a user
+      operationId: getFollowers
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
+      responses:
+        200:
+          $ref: "#/components/responses/UsersOK"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+  /users/{uid}/friends:
+    get:
+      tags:
+        - user
+      summary: Get Friends
+      description: Get friends (which means following each other) of a user
+      operationId: getFriends
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/uid"
+      responses:
+        200:
+          $ref: "#/components/responses/UsersOK"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+  /users/{uid}/follow:
     post:
       tags:
         - user
       summary: Follow User
-      description: Request to follow a user
+      description: Follow a user
       operationId: followUser
-      security:
-        - AppCheck: []
-        - AuthBearer: []
-      parameters:
-        - $ref: "#/components/parameters/uid"
-      responses:
-        200:
-          $ref: "#/components/responses/FollowStatusOK"
-        401:
-          $ref: "#/components/responses/Unauthorized"
-        404:
-          $ref: "#/components/responses/NotFound"
-        500:
-          $ref: "#/components/responses/InternalServerError"
-    patch:
-      tags:
-        - user
-      summary: Approve Follow Request
-      description: Approve follow request from a user
-      operationId: approveFollowRequest
       security:
         - AppCheck: []
         - AuthBearer: []
@@ -324,6 +335,32 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - task
+      summary: Update Task Forcibly
+      description: Update a task forcibly
+      operationId: updateTaskForcibly
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskInput"
+      responses:
+        200:
+          $ref: "#/components/responses/TaskOK"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
     patch:
       tags:
         - task
@@ -449,16 +486,13 @@ components:
           $ref: "#/components/schemas/User"
         to:
           $ref: "#/components/schemas/User"
-        requestedAt:
-          type: string
-          format: date-time
-        approvedAt:
+        timestamp:
           type: string
           format: date-time
       required:
         - from
         - to
-        - requestedAt
+        - timestamp
     TaskPool:
       type: object
       properties:
@@ -470,10 +504,10 @@ components:
         type:
           type: string
           enum:
-            - active
-            - archived
-            - bin
-            - pending
+            - taskPoolTypeActive
+            - taskPoolTypeArchived
+            - taskPoolTypeBin
+            - taskPoolTypePending
       required:
         - id
         - type
@@ -599,12 +633,8 @@ components:
             properties:
               token:
                 type: string
-              timestamp:
-                type: string
-                format: date-time
             required:
               - token
-              - timestamp
   responses:
     UserOK:
       description: OK
@@ -612,6 +642,14 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
+    UsersOK:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/User"
     FollowStatusOK:
       description: OK
       content:

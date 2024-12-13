@@ -12,8 +12,8 @@ import (
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) CreateUser(c *gin.Context) {
@@ -77,24 +77,26 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}(),
 	}
 
-	if err := db.Create(&user).Error; err != nil {
-		var pgErr *pgconn.PgError
-		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
-			message := err.Error()
-			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
-		}
+	if err := db.
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"display_name", "photo_url"}),
+		}).
+		Create(&user).Error; err != nil {
+		message := err.Error()
+		c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
 	}
 
 	var taskPools []model.TaskPool
 
 	if err := db.
-		Find(&taskPools).
 		Where(&model.TaskPool{
 			OwnerId: token.UID,
 		}).
+		Find(&taskPools).
 		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
@@ -106,10 +108,10 @@ func (s *Server) CreateUser(c *gin.Context) {
 	}
 
 	taskPoolTypes := []api.TaskPoolType{
-		api.Active,
-		api.Archived,
-		api.Bin,
-		api.Pending,
+		api.TaskPoolTypeActive,
+		api.TaskPoolTypeArchived,
+		api.TaskPoolTypeBin,
+		api.TaskPoolTypePending,
 	}
 	existingTaskPoolTypes := []api.TaskPoolType{}
 
@@ -129,7 +131,12 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}
 	}
 
-	if err := db.Save(&taskPools).Error; err != nil {
+	if err := db.
+		Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).
+		Create(&taskPools).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{

@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (s *Server) CreateTask(c *gin.Context) {
+func (s *Server) UpdateTaskForcibly(c *gin.Context, id uuid.UUID) {
 	token := utility.GetToken(c)
 	if token == nil {
 		message := "Unauthorized"
@@ -41,7 +41,7 @@ func (s *Server) CreateTask(c *gin.Context) {
 		sqldb.Close()
 	}()
 
-	var requestBody api.CreateTaskInput
+	var requestBody api.UpdateTaskInput
 	if err := c.BindJSON(&requestBody); err != nil {
 		message := err.Error()
 		c.AbortWithStatusJSON(http.StatusBadRequest, api.Error{
@@ -50,14 +50,16 @@ func (s *Server) CreateTask(c *gin.Context) {
 		return
 	}
 
-	var activePool model.TaskPool
-	if err := db.
-		Where(&model.TaskPool{
-			OwnerId: token.UID,
-			Type:    string(api.TaskPoolTypeActive),
-		}).
-		First(&activePool).
-		Error; err != nil {
+	task := model.Task{
+		Id:          id,
+		URL:         requestBody.Url,
+		CompletedAt: requestBody.CompletedAt,
+		RemovedAt:   requestBody.RemovedAt,
+		ArchivedAt:  requestBody.ArchivedAt,
+		PoolId:      requestBody.PoolId,
+	}
+
+	if err := db.Clauses(clause.Returning{}).Save(&task).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -65,25 +67,6 @@ func (s *Server) CreateTask(c *gin.Context) {
 			})
 			return
 		}
-	}
-
-	task := model.Task{
-		Id:      uuid.New(),
-		OwnerId: &token.UID,
-		URL:     &requestBody.Url,
-		PoolId:  &activePool.Id,
-	}
-
-	if err := db.
-		Clauses(clause.OnConflict{
-			DoNothing: true,
-		}).
-		Create(&task).
-		Error; err != nil {
-		message := err.Error()
-		c.JSON(http.StatusInternalServerError, api.Error{
-			Message: &message,
-		})
 	}
 
 	owner := model.User{
@@ -95,9 +78,40 @@ func (s *Server) CreateTask(c *gin.Context) {
 		}(),
 	}
 
-	if err := db.
-		First(&owner).
-		Error; err != nil {
+	if err := db.First(&owner).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	pool := model.TaskPool{
+		Id: func() uuid.UUID {
+			if task.PoolId == nil {
+				return uuid.UUID{}
+			}
+			return *task.PoolId
+		}(),
+	}
+
+	if err := db.First(&pool).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	poolOwner := model.User{
+		Id: pool.OwnerId,
+	}
+
+	if err := db.First(&poolOwner).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -117,6 +131,7 @@ func (s *Server) CreateTask(c *gin.Context) {
 		}(),
 		CreatedAt:   task.CreatedAt,
 		CompletedAt: task.CompletedAt,
+		RemovedAt:   task.RemovedAt,
 		ArchivedAt:  task.ArchivedAt,
 		Owner: api.User{
 			Id: owner.Id,
@@ -134,10 +149,25 @@ func (s *Server) CreateTask(c *gin.Context) {
 			}(),
 		},
 		Pool: api.TaskPool{
-			Id:   activePool.Id,
-			Type: api.TaskPoolType(activePool.Type),
+			Id: pool.Id,
+			Owner: &api.User{
+				Id: poolOwner.Id,
+				DisplayName: func() string {
+					if poolOwner.DisplayName == nil {
+						return ""
+					}
+					return *poolOwner.DisplayName
+				}(),
+				PhotoURL: func() string {
+					if poolOwner.PhotoURL == nil {
+						return ""
+					}
+					return *poolOwner.PhotoURL
+				}(),
+			},
+			Type: api.TaskPoolType(pool.Type),
 		},
 	}
 
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusOK, response)
 }

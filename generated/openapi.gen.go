@@ -20,10 +20,10 @@ const (
 
 // Defines values for TaskPoolType.
 const (
-	Active   TaskPoolType = "active"
-	Archived TaskPoolType = "archived"
-	Bin      TaskPoolType = "bin"
-	Pending  TaskPoolType = "pending"
+	TaskPoolTypeActive   TaskPoolType = "taskPoolTypeActive"
+	TaskPoolTypeArchived TaskPoolType = "taskPoolTypeArchived"
+	TaskPoolTypeBin      TaskPoolType = "taskPoolTypeBin"
+	TaskPoolTypePending  TaskPoolType = "taskPoolTypePending"
 )
 
 // CreateTaskInput defines model for CreateTaskInput.
@@ -38,10 +38,9 @@ type Error struct {
 
 // FollowStatus defines model for FollowStatus.
 type FollowStatus struct {
-	ApprovedAt  *time.Time `json:"approvedAt,omitempty"`
-	From        User       `json:"from"`
-	RequestedAt time.Time  `json:"requestedAt"`
-	To          User       `json:"to"`
+	From      User      `json:"from"`
+	Timestamp time.Time `json:"timestamp"`
+	To        User      `json:"to"`
 }
 
 // Notification defines model for Notification.
@@ -130,16 +129,17 @@ type Unauthorized = Error
 // UserOK defines model for UserOK.
 type UserOK = User
 
+// UsersOK defines model for UsersOK.
+type UsersOK = []User
+
 // UpsertFCMToken defines model for UpsertFCMToken.
 type UpsertFCMToken struct {
-	Timestamp time.Time `json:"timestamp"`
-	Token     string    `json:"token"`
+	Token string `json:"token"`
 }
 
 // UpsertFCMTokenJSONBody defines parameters for UpsertFCMToken.
 type UpsertFCMTokenJSONBody struct {
-	Timestamp time.Time `json:"timestamp"`
-	Token     string    `json:"token"`
+	Token string `json:"token"`
 }
 
 // GetTasksParams defines parameters for GetTasks.
@@ -156,6 +156,9 @@ type CreateTaskJSONRequestBody = CreateTaskInput
 
 // UpdateTaskJSONRequestBody defines body for UpdateTask for application/json ContentType.
 type UpdateTaskJSONRequestBody = UpdateTaskInput
+
+// UpdateTaskForciblyJSONRequestBody defines body for UpdateTaskForcibly for application/json ContentType.
+type UpdateTaskForciblyJSONRequestBody = UpdateTaskInput
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserInput
@@ -189,6 +192,9 @@ type ServerInterface interface {
 	// Update Task
 	// (PATCH /tasks/{id})
 	UpdateTask(c *gin.Context, id Id)
+	// Update Task Forcibly
+	// (PUT /tasks/{id})
+	UpdateTaskForcibly(c *gin.Context, id Id)
 	// Get Users
 	// (GET /users)
 	GetUsers(c *gin.Context)
@@ -207,15 +213,18 @@ type ServerInterface interface {
 	// Unfollow User
 	// (DELETE /users/{uid}/follow)
 	UnfollowUser(c *gin.Context, uid Uid)
-	// Get Follow Reqest
-	// (GET /users/{uid}/follow)
-	GetFollowRequest(c *gin.Context, uid Uid)
-	// Approve Follow Request
-	// (PATCH /users/{uid}/follow)
-	ApproveFollowRequest(c *gin.Context, uid Uid)
 	// Follow User
 	// (POST /users/{uid}/follow)
 	FollowUser(c *gin.Context, uid Uid)
+	// Get Followers
+	// (GET /users/{uid}/followers)
+	GetFollowers(c *gin.Context, uid Uid)
+	// Get Followings
+	// (GET /users/{uid}/followings)
+	GetFollowings(c *gin.Context, uid Uid)
+	// Get Friends
+	// (GET /users/{uid}/friends)
+	GetFriends(c *gin.Context, uid Uid)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -437,6 +446,34 @@ func (siw *ServerInterfaceWrapper) UpdateTask(c *gin.Context) {
 	siw.Handler.UpdateTask(c, id)
 }
 
+// UpdateTaskForcibly operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaskForcibly(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateTaskForcibly(c, id)
+}
+
 // GetUsers operation middleware
 func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 
@@ -583,62 +620,6 @@ func (siw *ServerInterfaceWrapper) UnfollowUser(c *gin.Context) {
 	siw.Handler.UnfollowUser(c, uid)
 }
 
-// GetFollowRequest operation middleware
-func (siw *ServerInterfaceWrapper) GetFollowRequest(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "uid" -------------
-	var uid Uid
-
-	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(AppCheckScopes, []string{})
-
-	c.Set(AuthBearerScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetFollowRequest(c, uid)
-}
-
-// ApproveFollowRequest operation middleware
-func (siw *ServerInterfaceWrapper) ApproveFollowRequest(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "uid" -------------
-	var uid Uid
-
-	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(AppCheckScopes, []string{})
-
-	c.Set(AuthBearerScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.ApproveFollowRequest(c, uid)
-}
-
 // FollowUser operation middleware
 func (siw *ServerInterfaceWrapper) FollowUser(c *gin.Context) {
 
@@ -665,6 +646,90 @@ func (siw *ServerInterfaceWrapper) FollowUser(c *gin.Context) {
 	}
 
 	siw.Handler.FollowUser(c, uid)
+}
+
+// GetFollowers operation middleware
+func (siw *ServerInterfaceWrapper) GetFollowers(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFollowers(c, uid)
+}
+
+// GetFollowings operation middleware
+func (siw *ServerInterfaceWrapper) GetFollowings(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFollowings(c, uid)
+}
+
+// GetFriends operation middleware
+func (siw *ServerInterfaceWrapper) GetFriends(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "uid" -------------
+	var uid Uid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uid", c.Param("uid"), &uid, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uid: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFriends(c, uid)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -703,13 +768,15 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/tasks/:id", wrapper.DeleteTask)
 	router.GET(options.BaseURL+"/tasks/:id", wrapper.GetTask)
 	router.PATCH(options.BaseURL+"/tasks/:id", wrapper.UpdateTask)
+	router.PUT(options.BaseURL+"/tasks/:id", wrapper.UpdateTaskForcibly)
 	router.GET(options.BaseURL+"/users", wrapper.GetUsers)
 	router.POST(options.BaseURL+"/users", wrapper.CreateUser)
 	router.DELETE(options.BaseURL+"/users/:uid", wrapper.DeleteUser)
 	router.GET(options.BaseURL+"/users/:uid", wrapper.GetUser)
 	router.PATCH(options.BaseURL+"/users/:uid", wrapper.UpdateUser)
 	router.DELETE(options.BaseURL+"/users/:uid/follow", wrapper.UnfollowUser)
-	router.GET(options.BaseURL+"/users/:uid/follow", wrapper.GetFollowRequest)
-	router.PATCH(options.BaseURL+"/users/:uid/follow", wrapper.ApproveFollowRequest)
 	router.POST(options.BaseURL+"/users/:uid/follow", wrapper.FollowUser)
+	router.GET(options.BaseURL+"/users/:uid/followers", wrapper.GetFollowers)
+	router.GET(options.BaseURL+"/users/:uid/followings", wrapper.GetFollowings)
+	router.GET(options.BaseURL+"/users/:uid/friends", wrapper.GetFriends)
 }
