@@ -10,7 +10,9 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 )
 
 func (s *Server) CreateUser(c *gin.Context) {
@@ -69,5 +71,58 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, user)
+	activeTaskPool := model.TaskPool{
+		Id:      uuid.New(),
+		OwnerId: user.Id,
+		Type:    "active",
+	}
+
+	archivedTaskPool := model.TaskPool{
+		Id:      uuid.New(),
+		OwnerId: user.Id,
+		Type:    "archived",
+	}
+
+	pendingTaskPool := model.TaskPool{
+		Id:      uuid.New(),
+		OwnerId: user.Id,
+		Type:    "pending",
+	}
+
+	binTaskPool := model.TaskPool{
+		Id:      uuid.New(),
+		OwnerId: user.Id,
+		Type:    "bin",
+	}
+
+	taskPool := []model.TaskPool{}
+	taskPool = append(taskPool, activeTaskPool, archivedTaskPool, pendingTaskPool, binTaskPool)
+
+	if err := db.Create(&taskPool).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	response := api.User{
+		Id: user.Id,
+		DisplayName: func() string {
+			if user.DisplayName == nil {
+				return ""
+			}
+			return *user.DisplayName
+		}(),
+		PhotoURL: func() string {
+			if user.PhotoURL == nil {
+				return ""
+			}
+			return *user.PhotoURL
+		}(),
+	}
+
+	c.JSON(http.StatusCreated, response)
 }

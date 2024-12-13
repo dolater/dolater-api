@@ -8,5 +8,5 @@ type TaskPool struct {
 	Id      uuid.UUID
 	OwnerId string
 	Owner   User
-	Type    string // active, archived, pending
+	Type    string // active, archived, pending, bin
 }
