@@ -22,6 +22,7 @@ const (
 const (
 	Active   TaskPoolType = "active"
 	Archived TaskPoolType = "archived"
+	Bin      TaskPoolType = "bin"
 	Pending  TaskPoolType = "pending"
 )
 
@@ -60,6 +61,7 @@ type Task struct {
 	Id          openapi_types.UUID `json:"id"`
 	Owner       User               `json:"owner"`
 	Pool        TaskPool           `json:"pool"`
+	RemovedAt   *time.Time         `json:"removedAt,omitempty"`
 	Url         string             `json:"url"`
 }
 
@@ -89,14 +91,9 @@ type UpdateUserInput struct {
 
 // User defines model for User.
 type User struct {
-	ActiveTaskPool   *TaskPool       `json:"activeTaskPool,omitempty"`
-	ArchivedTaskPool *TaskPool       `json:"archivedTaskPool,omitempty"`
-	DisplayName      string          `json:"displayName"`
-	Followers        *[]FollowStatus `json:"followers,omitempty"`
-	Followings       *[]FollowStatus `json:"followings,omitempty"`
-	Id               string          `json:"id"`
-	PendingTaskPool  *TaskPool       `json:"pendingTaskPool,omitempty"`
-	PhotoURL         string          `json:"photoURL"`
+	DisplayName string `json:"displayName"`
+	Id          string `json:"id"`
+	PhotoURL    string `json:"photoURL"`
 }
 
 // Id defines model for id.
@@ -170,6 +167,9 @@ type ServerInterface interface {
 	// Upsert FCM Token
 	// (PATCH /notifications/fcmToken)
 	UpsertFCMToken(c *gin.Context)
+	// Get Pools
+	// (GET /pools)
+	GetPools(c *gin.Context)
 	// Get Pool
 	// (GET /pools/{id})
 	GetPool(c *gin.Context, id Id)
@@ -258,6 +258,23 @@ func (siw *ServerInterfaceWrapper) UpsertFCMToken(c *gin.Context) {
 	}
 
 	siw.Handler.UpsertFCMToken(c)
+}
+
+// GetPools operation middleware
+func (siw *ServerInterfaceWrapper) GetPools(c *gin.Context) {
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetPools(c)
 }
 
 // GetPool operation middleware
@@ -678,6 +695,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/notifications", wrapper.GetNotifications)
 	router.PATCH(options.BaseURL+"/notifications/fcmToken", wrapper.UpsertFCMToken)
+	router.GET(options.BaseURL+"/pools", wrapper.GetPools)
 	router.GET(options.BaseURL+"/pools/:id", wrapper.GetPool)
 	router.GET(options.BaseURL+"/tasks", wrapper.GetTasks)
 	router.POST(options.BaseURL+"/tasks", wrapper.CreateTask)

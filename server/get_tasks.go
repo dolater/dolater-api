@@ -10,6 +10,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -57,5 +58,100 @@ func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 		}
 	}
 
-	c.JSON(http.StatusOK, tasks)
+	response := []api.Task{}
+
+	for _, task := range tasks {
+		owner := model.User{
+			Id: func() string {
+				if task.OwnerId == nil {
+					return ""
+				}
+				return *task.OwnerId
+			}(),
+		}
+		if err := db.
+			First(&owner).
+			Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				message := err.Error()
+				c.JSON(http.StatusInternalServerError, api.Error{
+					Message: &message,
+				})
+				return
+			}
+		}
+
+		pool := model.TaskPool{
+			Id: func() uuid.UUID {
+				if task.PoolId == nil {
+					return uuid.UUID{}
+				}
+				return *task.PoolId
+			}(),
+		}
+
+		if err := db.
+			First(&pool).
+			Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				message := err.Error()
+				c.JSON(http.StatusInternalServerError, api.Error{
+					Message: &message,
+				})
+				return
+			}
+		}
+		poolOwner := model.User{
+			Id: pool.OwnerId,
+		}
+
+		response = append(response, api.Task{
+			Id: task.Id,
+			Url: func() string {
+				if task.URL == nil {
+					return ""
+				}
+				return *task.URL
+			}(),
+			CreatedAt:   task.CreatedAt,
+			CompletedAt: task.CompletedAt,
+			ArchivedAt:  task.ArchivedAt,
+			Owner: api.User{
+				Id: owner.Id,
+				DisplayName: func() string {
+					if owner.DisplayName == nil {
+						return ""
+					}
+					return *owner.DisplayName
+				}(),
+				PhotoURL: func() string {
+					if owner.PhotoURL == nil {
+						return ""
+					}
+					return *owner.PhotoURL
+				}(),
+			},
+			Pool: api.TaskPool{
+				Id: pool.Id,
+				Owner: &api.User{
+					Id: poolOwner.Id,
+					DisplayName: func() string {
+						if poolOwner.DisplayName == nil {
+							return ""
+						}
+						return *poolOwner.DisplayName
+					}(),
+					PhotoURL: func() string {
+						if poolOwner.PhotoURL == nil {
+							return ""
+						}
+						return *poolOwner.PhotoURL
+					}(),
+				},
+				Type: api.TaskPoolType(pool.Type),
+			},
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (s *Server) FollowUser(c *gin.Context, uid string) {
@@ -53,11 +55,13 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 	}
 
 	if err := db.Create(&followStatus).Error; err != nil {
-		message := err.Error()
-		c.JSON(http.StatusInternalServerError, api.Error{
-			Message: &message,
-		})
-		return
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
 	fromUser := model.User{
