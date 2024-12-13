@@ -148,6 +148,7 @@ func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 						return *poolOwner.PhotoURL
 					}(),
 				},
+				Type: api.TaskPoolType(pool.Type),
 			},
 		})
 	}
