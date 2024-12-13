@@ -525,6 +525,9 @@ components:
         completedAt:
           type: string
           format: date-time
+        removedAt:
+          type: string
+          format: date-time
         archivedAt:
           type: string
           format: date-time
