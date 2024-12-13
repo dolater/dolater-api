@@ -131,7 +131,12 @@ func (s *Server) CreateUser(c *gin.Context) {
 		}
 	}
 
-	if err := db.Create(&taskPools).Error; err != nil {
+	if err := db.
+		Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).
+		Create(&taskPools).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
