@@ -53,6 +53,7 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		Id:          id,
 		URL:         requestBody.Url,
 		CompletedAt: requestBody.CompletedAt,
+		RemovedAt:   requestBody.RemovedAt,
 		ArchivedAt:  requestBody.ArchivedAt,
 		PoolId:      requestBody.PoolId,
 	}
@@ -125,6 +126,7 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		}(),
 		CreatedAt:   task.CreatedAt,
 		CompletedAt: task.CompletedAt,
+		RemovedAt:   task.RemovedAt,
 		ArchivedAt:  task.ArchivedAt,
 		Owner: api.User{
 			Id: owner.Id,
