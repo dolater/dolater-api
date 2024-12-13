@@ -406,20 +406,10 @@ components:
         photoURL:
           type: string
           format: uri
-        activeTaskPool:
-          $ref: "#/components/schemas/TaskPool"
-        archivedTaskPool:
-          $ref: "#/components/schemas/TaskPool"
-        pendingTaskPool:
-          $ref: "#/components/schemas/TaskPool"
-        followings:
+        pools:
           type: array
           items:
-            $ref: "#/components/schemas/FollowStatus"
-        followers:
-          type: array
-          items:
-            $ref: "#/components/schemas/FollowStatus"
+            $ref: "#/components/schemas/TaskPool"
       required:
         - id
         - displayName
@@ -463,6 +453,7 @@ components:
           enum:
             - active
             - archived
+            - bin
             - pending
       required:
         - id
@@ -480,6 +471,9 @@ components:
           type: string
           format: date-time
         completedAt:
+          type: string
+          format: date-time
+        removedAt:
           type: string
           format: date-time
         archivedAt:

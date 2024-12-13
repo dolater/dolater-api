@@ -22,6 +22,7 @@ const (
 const (
 	Active   TaskPoolType = "active"
 	Archived TaskPoolType = "archived"
+	Bin      TaskPoolType = "bin"
 	Pending  TaskPoolType = "pending"
 )
 
@@ -60,6 +61,7 @@ type Task struct {
 	Id          openapi_types.UUID `json:"id"`
 	Owner       User               `json:"owner"`
 	Pool        TaskPool           `json:"pool"`
+	RemovedAt   *time.Time         `json:"removedAt,omitempty"`
 	Url         string             `json:"url"`
 }
 
@@ -89,14 +91,10 @@ type UpdateUserInput struct {
 
 // User defines model for User.
 type User struct {
-	ActiveTaskPool   *TaskPool       `json:"activeTaskPool,omitempty"`
-	ArchivedTaskPool *TaskPool       `json:"archivedTaskPool,omitempty"`
-	DisplayName      string          `json:"displayName"`
-	Followers        *[]FollowStatus `json:"followers,omitempty"`
-	Followings       *[]FollowStatus `json:"followings,omitempty"`
-	Id               string          `json:"id"`
-	PendingTaskPool  *TaskPool       `json:"pendingTaskPool,omitempty"`
-	PhotoURL         string          `json:"photoURL"`
+	DisplayName string      `json:"displayName"`
+	Id          string      `json:"id"`
+	PhotoURL    string      `json:"photoURL"`
+	Pools       *[]TaskPool `json:"pools,omitempty"`
 }
 
 // Id defines model for id.
