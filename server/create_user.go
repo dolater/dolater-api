@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
@@ -60,54 +61,6 @@ func (s *Server) CreateUser(c *gin.Context) {
 		PhotoURL:    &photoURL,
 	}
 
-	if err := db.Create(&user).Error; err != nil {
-		var pgErr *pgconn.PgError
-		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
-			message := err.Error()
-			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
-		}
-	}
-
-	activeTaskPool := model.TaskPool{
-		Id:      uuid.New(),
-		OwnerId: user.Id,
-		Type:    "active",
-	}
-
-	archivedTaskPool := model.TaskPool{
-		Id:      uuid.New(),
-		OwnerId: user.Id,
-		Type:    "archived",
-	}
-
-	pendingTaskPool := model.TaskPool{
-		Id:      uuid.New(),
-		OwnerId: user.Id,
-		Type:    "pending",
-	}
-
-	binTaskPool := model.TaskPool{
-		Id:      uuid.New(),
-		OwnerId: user.Id,
-		Type:    "bin",
-	}
-
-	taskPool := []model.TaskPool{}
-	taskPool = append(taskPool, activeTaskPool, archivedTaskPool, pendingTaskPool, binTaskPool)
-
-	if err := db.Create(&taskPool).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			message := err.Error()
-			c.JSON(http.StatusInternalServerError, api.Error{
-				Message: &message,
-			})
-			return
-		}
-	}
-
 	response := api.User{
 		Id: user.Id,
 		DisplayName: func() string {
@@ -122,6 +75,68 @@ func (s *Server) CreateUser(c *gin.Context) {
 			}
 			return *user.PhotoURL
 		}(),
+	}
+
+	if err := db.Create(&user).Error; err != nil {
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+			message := err.Error()
+			c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	var taskPools []model.TaskPool
+
+	if err := db.
+		Find(&taskPools).
+		Where(&model.TaskPool{
+			OwnerId: token.UID,
+		}).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	taskPoolTypes := []api.TaskPoolType{
+		api.Active,
+		api.Archived,
+		api.Bin,
+		api.Pending,
+	}
+	existingTaskPoolTypes := []api.TaskPoolType{}
+
+	for _, pool := range taskPools {
+		if slices.Contains(taskPoolTypes, api.TaskPoolType(pool.Type)) && !slices.Contains(existingTaskPoolTypes, api.TaskPoolType(pool.Type)) {
+			existingTaskPoolTypes = append(existingTaskPoolTypes, api.TaskPoolType(pool.Type))
+		}
+	}
+
+	for _, poolType := range taskPoolTypes {
+		if !slices.Contains(existingTaskPoolTypes, poolType) {
+			taskPools = append(taskPools, model.TaskPool{
+				Id:      uuid.New(),
+				OwnerId: user.Id,
+				Type:    string(poolType),
+			})
+		}
+	}
+
+	if err := db.Save(&taskPools).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, response)
