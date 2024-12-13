@@ -58,7 +58,7 @@ func (s *Server) UpdateTask(c *gin.Context, id uuid.UUID) {
 		PoolId:      requestBody.PoolId,
 	}
 
-	if err := db.Save(&task).Error; err != nil {
+	if err := db.Updates(&task).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
