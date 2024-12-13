@@ -62,5 +62,21 @@ func (s *Server) GetUser(c *gin.Context, uid string) {
 		}
 	}
 
-	c.JSON(http.StatusOK, user)
+	response := api.User{
+		Id: user.Id,
+		DisplayName: func() string {
+			if user.DisplayName == nil {
+				return ""
+			}
+			return *user.DisplayName
+		}(),
+		PhotoURL: func() string {
+			if user.PhotoURL == nil {
+				return ""
+			}
+			return *user.PhotoURL
+		}(),
+	}
+
+	c.JSON(http.StatusOK, response)
 }

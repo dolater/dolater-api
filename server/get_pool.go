@@ -55,5 +55,41 @@ func (s *Server) GetPool(c *gin.Context, id uuid.UUID) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, pool)
+
+	owner := model.User{
+		Id: pool.OwnerId,
+	}
+
+	if err := db.
+		First(&owner).
+		Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusNotFound, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+	response := api.TaskPool{
+		Id: pool.Id,
+		Owner: &api.User{
+			Id: owner.Id,
+			DisplayName: func() string {
+				if owner.DisplayName == nil {
+					return ""
+				}
+				return *owner.DisplayName
+			}(),
+			PhotoURL: func() string {
+				if owner.PhotoURL == nil {
+					return ""
+				}
+				return *owner.PhotoURL
+			}(),
+		},
+		Type: api.TaskPoolType(pool.Type),
+	}
+
+	c.JSON(http.StatusOK, response)
 }
