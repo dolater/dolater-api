@@ -101,8 +101,21 @@ func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 				return
 			}
 		}
+
 		poolOwner := model.User{
 			Id: pool.OwnerId,
+		}
+
+		if err := db.
+			First(&poolOwner).
+			Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				message := err.Error()
+				c.JSON(http.StatusInternalServerError, api.Error{
+					Message: &message,
+				})
+				return
+			}
 		}
 
 		response = append(response, api.Task{
