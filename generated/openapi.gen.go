@@ -20,10 +20,10 @@ const (
 
 // Defines values for TaskPoolType.
 const (
-	Active   TaskPoolType = "active"
-	Archived TaskPoolType = "archived"
-	Bin      TaskPoolType = "bin"
-	Pending  TaskPoolType = "pending"
+	TaskPoolTypeActive   TaskPoolType = "taskPoolTypeActive"
+	TaskPoolTypeArchived TaskPoolType = "taskPoolTypeArchived"
+	TaskPoolTypeBin      TaskPoolType = "taskPoolTypeBin"
+	TaskPoolTypePending  TaskPoolType = "taskPoolTypePending"
 )
 
 // CreateTaskInput defines model for CreateTaskInput.

@@ -50,12 +50,12 @@ func (s *Server) CreateTask(c *gin.Context) {
 		return
 	}
 
-	activePool := model.TaskPool{
-		OwnerId: token.UID,
-		Type:    "active",
-	}
-
+	var activePool model.TaskPool
 	if err := db.
+		Where(&model.TaskPool{
+			OwnerId: token.UID,
+			Type:    string(api.TaskPoolTypeActive),
+		}).
 		First(&activePool).
 		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

@@ -108,10 +108,10 @@ func (s *Server) CreateUser(c *gin.Context) {
 	}
 
 	taskPoolTypes := []api.TaskPoolType{
-		api.Active,
-		api.Archived,
-		api.Bin,
-		api.Pending,
+		api.TaskPoolTypeActive,
+		api.TaskPoolTypeArchived,
+		api.TaskPoolTypeBin,
+		api.TaskPoolTypePending,
 	}
 	existingTaskPoolTypes := []api.TaskPoolType{}
 
