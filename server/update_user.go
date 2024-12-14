@@ -11,6 +11,7 @@ import (
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (s *Server) UpdateUser(c *gin.Context, uid string) {
@@ -54,7 +55,10 @@ func (s *Server) UpdateUser(c *gin.Context, uid string) {
 		PhotoURL:    requestBody.PhotoURL,
 	}
 
-	if err := db.Updates(&user).Error; err != nil {
+	if err := db.
+		Clauses(clause.Returning{}).
+		Updates(&user).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
