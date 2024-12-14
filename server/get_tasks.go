@@ -40,13 +40,45 @@ func (s *Server) GetTasks(c *gin.Context, params api.GetTasksParams) {
 		sqldb.Close()
 	}()
 
-	tasks := []model.Task{}
-
-	if err := db.
-		Where(&model.Task{
-			OwnerId: &token.UID,
-			PoolId:  params.PoolId,
-		}).
+	query := db
+	if params.FriendHas != nil && *params.FriendHas {
+		var myPools []model.TaskPool
+		if err := db.
+			Where(&model.TaskPool{
+				OwnerId: token.UID,
+			}).
+			Find(&myPools).
+			Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				message := err.Error()
+				c.JSON(http.StatusInternalServerError, api.Error{
+					Message: &message,
+				})
+				return
+			}
+		}
+		myPoolIds := make([]uuid.UUID, len(myPools))
+		for i, pool := range myPools {
+			myPoolIds[i] = pool.Id
+		}
+		query = query.
+			Where(&model.Task{
+				OwnerId: &token.UID,
+			}).
+			Where("pool_id NOT IN (?)", myPoolIds)
+	} else if poolId := params.PoolId; poolId == nil {
+		query = query.
+			Where(&model.Task{
+				OwnerId: &token.UID,
+			})
+	} else {
+		query = query.
+			Where(&model.Task{
+				PoolId: poolId,
+			})
+	}
+	var tasks []model.Task
+	if err := query.
 		Find(&tasks).
 		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

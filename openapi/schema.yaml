@@ -271,6 +271,7 @@ paths:
         - AuthBearer: []
       parameters:
         - $ref: "#/components/parameters/poolId"
+        - $ref: "#/components/parameters/friendHas"
       responses:
         200:
           description: OK
@@ -613,6 +614,13 @@ components:
       schema:
         type: string
         format: uuid
+    friendHas:
+      name: friendHas
+      in: query
+      required: false
+      description: Filter tasks by friend has
+      schema:
+        type: boolean
   securitySchemes:
     AuthBearer:
       type: http

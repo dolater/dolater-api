@@ -96,6 +96,9 @@ type User struct {
 	PhotoURL    string `json:"photoURL"`
 }
 
+// FriendHas defines model for friendHas.
+type FriendHas = bool
+
 // Id defines model for id.
 type Id = openapi_types.UUID
 
@@ -146,6 +149,9 @@ type UpsertFCMTokenJSONBody struct {
 type GetTasksParams struct {
 	// PoolId Pool ID
 	PoolId *PoolId `form:"poolId,omitempty" json:"poolId,omitempty"`
+
+	// FriendHas Filter tasks by friend has
+	FriendHas *FriendHas `form:"friendHas,omitempty" json:"friendHas,omitempty"`
 }
 
 // UpsertFCMTokenJSONRequestBody defines body for UpsertFCMToken for application/json ContentType.
@@ -332,6 +338,14 @@ func (siw *ServerInterfaceWrapper) GetTasks(c *gin.Context) {
 	err = runtime.BindQueryParameter("form", true, false, "poolId", c.Request.URL.Query(), &params.PoolId)
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter poolId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "friendHas" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "friendHas", c.Request.URL.Query(), &params.FriendHas)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter friendHas: %w", err), http.StatusBadRequest)
 		return
 	}
 
