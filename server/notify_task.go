@@ -82,12 +82,24 @@ func (s *Server) NotifyTask(c *gin.Context, id uuid.UUID) {
 		return
 	}
 
+	displayName := func() string {
+		if taskOwner.DisplayName == nil {
+			return ""
+		}
+		return *taskOwner.DisplayName
+	}()
+
 	notification := model.Notification{
 		Id:     uuid.New(),
 		UserId: taskOwner.Id,
-		Title:  "後回しリンクを解消しましよう!!",
-		Body:   requestBody.Emoji,
-		URL:    "https://dolater.kantacky.com/tasks/" + task.Id.String() + "?emoji=" + url.QueryEscape(requestBody.Emoji),
+		Title:  "あーあ...急いで!!",
+		Body: func() string {
+			if displayName == "" {
+				return requestBody.Emoji + "誰かに催促されています"
+			}
+			return requestBody.Emoji + displayName + " さんに催促されています"
+		}(),
+		URL: "https://dolater.kantacky.com/tasks/" + task.Id.String() + "?emoji=" + url.QueryEscape(requestBody.Emoji),
 	}
 
 	if err := db.Create(&notification).Error; err != nil {
