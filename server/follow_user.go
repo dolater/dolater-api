@@ -57,7 +57,7 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 
 	if err := db.
 		Clauses(clause.OnConflict{
-			DoNothing: true,
+			UpdateAll: true,
 		}).
 		Create(&followStatus).
 		Error; err != nil {
