@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"firebase.google.com/go/v4/messaging"
 	"github.com/dolater/dolater-api/db"
@@ -11,6 +12,7 @@ import (
 	"github.com/dolater/dolater-api/model"
 	"github.com/dolater/dolater-api/server/utility"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -188,6 +190,28 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 	if err != nil {
 		message := err.Error()
 		c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
+	notification := model.Notification{
+		Id:     uuid.New(),
+		UserId: response.To.Id,
+		Title:  "フォローバックしましょう!!",
+		Body: func() string {
+			if response.From.DisplayName == "" {
+				return "誰かがあなたをフォローしました"
+			}
+			return response.From.DisplayName + " さんがあなたをフォローしました"
+		}(),
+		URL:       "https://dolater.kantacky.com/users/" + response.From.Id,
+		CreatedAt: time.Now(),
+	}
+
+	if err := db.Create(&notification).Error; err != nil {
+		message := err.Error()
+		c.JSON(http.StatusInternalServerError, api.Error{
 			Message: &message,
 		})
 		return
