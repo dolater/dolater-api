@@ -23,13 +23,13 @@ func (s *Server) GetUser(c *gin.Context, uid string) {
 		return
 	}
 
-	if token.UID != uid {
-		message := "Unauthorized"
-		c.AbortWithStatusJSON(http.StatusUnauthorized, api.Error{
-			Message: &message,
-		})
-		return
-	}
+	// if token.UID != uid {
+	// 	message := "Unauthorized"
+	// 	c.AbortWithStatusJSON(http.StatusUnauthorized, api.Error{
+	// 		Message: &message,
+	// 	})
+	// 	return
+	// }
 
 	db, err := db.GormDB("public")
 	if err != nil {
