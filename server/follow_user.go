@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"firebase.google.com/go/v4/messaging"
 	"github.com/dolater/dolater-api/db"
 	api "github.com/dolater/dolater-api/generated"
 	"github.com/dolater/dolater-api/model"
@@ -124,6 +125,54 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 			}(),
 		},
 		Timestamp: followStatus.CreatedAt,
+	}
+
+	fcmToken := model.FCMToken{
+		UserId: followStatus.ToId,
+	}
+
+	if err := db.First(&fcmToken).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusInternalServerError, api.Error{
+				Message: &message,
+			})
+			return
+		}
+	}
+
+	// 通知メッセージを作成
+	messages := []*messaging.Message{}
+	messages = append(messages, &messaging.Message{
+		Notification: &messaging.Notification{
+			Title: "You have a new follower!",
+			Body:  response.From.DisplayName + " is now following you.",
+		},
+		Token: fcmToken.RegistrationToken,
+	})
+
+	if len(messages) == 0 {
+		c.Status(http.StatusNoContent)
+		return
+	}
+
+	// 通知を送信
+	client, err := s.FirebaseApp.Messaging(c)
+	if err != nil {
+		message := err.Error()
+		c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
+	}
+
+	_, err = client.SendEach(c, messages)
+	if err != nil {
+		message := err.Error()
+		c.AbortWithStatusJSON(http.StatusInternalServerError, api.Error{
+			Message: &message,
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, response)
