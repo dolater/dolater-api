@@ -201,6 +201,9 @@ type ServerInterface interface {
 	// Update Task Forcibly
 	// (PUT /tasks/{id})
 	UpdateTaskForcibly(c *gin.Context, id Id)
+	// Notify Task
+	// (POST /tasks/{id}/notify)
+	NotifyTask(c *gin.Context, id Id)
 	// Get Users
 	// (GET /users)
 	GetUsers(c *gin.Context)
@@ -486,6 +489,34 @@ func (siw *ServerInterfaceWrapper) UpdateTaskForcibly(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateTaskForcibly(c, id)
+}
+
+// NotifyTask operation middleware
+func (siw *ServerInterfaceWrapper) NotifyTask(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(AppCheckScopes, []string{})
+
+	c.Set(AuthBearerScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.NotifyTask(c, id)
 }
 
 // GetUsers operation middleware
@@ -783,6 +814,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/tasks/:id", wrapper.GetTask)
 	router.PATCH(options.BaseURL+"/tasks/:id", wrapper.UpdateTask)
 	router.PUT(options.BaseURL+"/tasks/:id", wrapper.UpdateTaskForcibly)
+	router.POST(options.BaseURL+"/tasks/:id/notify", wrapper.NotifyTask)
 	router.GET(options.BaseURL+"/users", wrapper.GetUsers)
 	router.POST(options.BaseURL+"/users", wrapper.CreateUser)
 	router.DELETE(options.BaseURL+"/users/:uid", wrapper.DeleteUser)
