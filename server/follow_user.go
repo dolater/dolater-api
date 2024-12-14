@@ -127,11 +127,14 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 		Timestamp: followStatus.CreatedAt,
 	}
 
-	fcmToken := model.FCMToken{
-		UserId: followStatus.ToId,
-	}
+	var fcmToken model.FCMToken
 
-	if err := db.First(&fcmToken).Error; err != nil {
+	if err := db.
+		Where(&model.FCMToken{
+			UserId: followStatus.ToId,
+		}).
+		First(&fcmToken).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
@@ -144,9 +147,24 @@ func (s *Server) FollowUser(c *gin.Context, uid string) {
 	// 通知メッセージを作成
 	messages := []*messaging.Message{}
 	messages = append(messages, &messaging.Message{
+		Data: map[string]string{
+			"url": "https://dolater.kantacky.com/users/" + response.From.Id,
+		},
 		Notification: &messaging.Notification{
-			Title: "You have a new follower!",
-			Body:  response.From.DisplayName + " is now following you.",
+			Title: "フォローバックしましょう!!",
+			Body: func() string {
+				if response.From.DisplayName == "" {
+					return "誰かがあなたをフォローしました"
+				}
+				return response.From.DisplayName + " さんがあなたをフォローしました"
+			}(),
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Sound: "default",
+				},
+			},
 		},
 		Token: fcmToken.RegistrationToken,
 	})
