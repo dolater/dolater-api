@@ -378,7 +378,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTaskInput"
+
       responses:
         200:
           $ref: "#/components/responses/TaskOK"
@@ -420,6 +420,12 @@ paths:
         - AuthBearer: []
       parameters:
         - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotifyTaskInput"
       responses:
         204:
           $ref: "#/components/responses/NoContent"
@@ -611,6 +617,13 @@ components:
         - id
         - title
         - createdAt
+    NotifyTaskInput:
+      type: object
+      properties:
+        emoji:
+          type: string
+      required:
+        - emoji
   parameters:
     id:
       name: id

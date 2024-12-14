@@ -52,6 +52,11 @@ type Notification struct {
 	Url       *string            `json:"url,omitempty"`
 }
 
+// NotifyTaskInput defines model for NotifyTaskInput.
+type NotifyTaskInput struct {
+	Emoji string `json:"emoji"`
+}
+
 // Task defines model for Task.
 type Task struct {
 	ArchivedAt  *time.Time         `json:"archivedAt,omitempty"`
@@ -154,6 +159,9 @@ type GetTasksParams struct {
 	FriendHas *FriendHas `form:"friendHas,omitempty" json:"friendHas,omitempty"`
 }
 
+// UpdateTaskJSONBody defines parameters for UpdateTask.
+type UpdateTaskJSONBody interface{}
+
 // UpsertFCMTokenJSONRequestBody defines body for UpsertFCMToken for application/json ContentType.
 type UpsertFCMTokenJSONRequestBody UpsertFCMTokenJSONBody
 
@@ -161,10 +169,13 @@ type UpsertFCMTokenJSONRequestBody UpsertFCMTokenJSONBody
 type CreateTaskJSONRequestBody = CreateTaskInput
 
 // UpdateTaskJSONRequestBody defines body for UpdateTask for application/json ContentType.
-type UpdateTaskJSONRequestBody = UpdateTaskInput
+type UpdateTaskJSONRequestBody UpdateTaskJSONBody
 
 // UpdateTaskForciblyJSONRequestBody defines body for UpdateTaskForcibly for application/json ContentType.
 type UpdateTaskForciblyJSONRequestBody = UpdateTaskInput
+
+// NotifyTaskJSONRequestBody defines body for NotifyTask for application/json ContentType.
+type NotifyTaskJSONRequestBody = NotifyTaskInput
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserInput
