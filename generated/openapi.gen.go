@@ -159,9 +159,6 @@ type GetTasksParams struct {
 	FriendHas *FriendHas `form:"friendHas,omitempty" json:"friendHas,omitempty"`
 }
 
-// UpdateTaskJSONBody defines parameters for UpdateTask.
-type UpdateTaskJSONBody interface{}
-
 // UpsertFCMTokenJSONRequestBody defines body for UpsertFCMToken for application/json ContentType.
 type UpsertFCMTokenJSONRequestBody UpsertFCMTokenJSONBody
 
@@ -169,7 +166,7 @@ type UpsertFCMTokenJSONRequestBody UpsertFCMTokenJSONBody
 type CreateTaskJSONRequestBody = CreateTaskInput
 
 // UpdateTaskJSONRequestBody defines body for UpdateTask for application/json ContentType.
-type UpdateTaskJSONRequestBody UpdateTaskJSONBody
+type UpdateTaskJSONRequestBody = UpdateTaskInput
 
 // UpdateTaskForciblyJSONRequestBody defines body for UpdateTaskForcibly for application/json ContentType.
 type UpdateTaskForciblyJSONRequestBody = UpdateTaskInput
