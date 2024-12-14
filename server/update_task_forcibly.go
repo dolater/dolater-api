@@ -50,16 +50,31 @@ func (s *Server) UpdateTaskForcibly(c *gin.Context, id uuid.UUID) {
 		return
 	}
 
+	log.Println(requestBody)
+
 	task := model.Task{
-		Id:          id,
-		URL:         requestBody.Url,
-		CompletedAt: requestBody.CompletedAt,
-		RemovedAt:   requestBody.RemovedAt,
-		ArchivedAt:  requestBody.ArchivedAt,
-		PoolId:      requestBody.PoolId,
+		Id: id,
+	}
+	if err := db.First(&task).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			message := err.Error()
+			c.JSON(http.StatusNotFound, api.Error{
+				Message: &message,
+			})
+			return
+		}
 	}
 
-	if err := db.Clauses(clause.Returning{}).Save(&task).Error; err != nil {
+	task.URL = requestBody.Url
+	task.CompletedAt = requestBody.CompletedAt
+	task.RemovedAt = requestBody.RemovedAt
+	task.ArchivedAt = requestBody.ArchivedAt
+	task.PoolId = requestBody.PoolId
+
+	if err := db.
+		Clauses(clause.Returning{}).
+		Save(&task).
+		Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			message := err.Error()
 			c.JSON(http.StatusInternalServerError, api.Error{
