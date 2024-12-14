@@ -77,7 +77,7 @@ func (s *Server) GetFriends(c *gin.Context, uid string) {
 	for _, fs := range followingStatus {
 		followingUids.Add(fs.ToId)
 	}
-	for _, fs := range followingStatus {
+	for _, fs := range followedStatus {
 		followedUids.Add(fs.FromId)
 	}
 
