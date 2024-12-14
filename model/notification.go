@@ -10,6 +10,7 @@ import (
 type Notification struct {
 	Id     uuid.UUID
 	UserId string
+	User   User
 	Title  string
 	Body   string
 	URL    string
