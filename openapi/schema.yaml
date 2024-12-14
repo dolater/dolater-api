@@ -408,6 +408,27 @@ paths:
           $ref: "#/components/responses/NotFound"
         500:
           $ref: "#/components/responses/InternalServerError"
+  /tasks/{id}/notify:
+    post:
+      tags:
+        - task
+      summary: Notify Task
+      description: Notify a task
+      operationId: notifyTask
+      security:
+        - AppCheck: []
+        - AuthBearer: []
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        204:
+          $ref: "#/components/responses/NoContent"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
   /notifications:
     get:
       tags:
